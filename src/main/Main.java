@@ -15,7 +15,7 @@ import dynamicArea.DynamicArea;
 import fighting.Fighting;
 import simpleGui.SimpleGui;
 
-@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighterer", name = "Beta Dynamic fighterer v0.3", version = .3, logo = "")
+@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.1", version = .1, logo = "")
 public class Main extends Script {
 	Banking bank;
 	Fighting fighter;
