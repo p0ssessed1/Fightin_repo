@@ -68,9 +68,12 @@ public class Main extends Script {
 		log("Setup Gui");
 		gui.Display();
 	}
-
+	int failCount = 0;
 	@Override
 	public int onLoop() throws InterruptedException {
+		if(failCount > 3){
+			stop(true);
+		}
 		if(!client.isLoggedIn()){
 			Script.sleep(1000);
 		}
@@ -84,6 +87,15 @@ public class Main extends Script {
 				sleep(100);
 			} else {
 				log("Failed to attack.");
+				if (!fighter.isInArea()) {
+					log("Not In area.");
+					if (!fighter.walkToArea()) {
+						log("Couldn't walk back to area.");
+						failCount++;
+					} else{
+						failCount = 0;
+					}
+				}
 			}
 		}else{
 			sleep(random(500,1000));
@@ -98,7 +110,9 @@ public class Main extends Script {
 					log("Not In area.");
 					if (!fighter.walkToArea()) {
 						log("Couldn't walk back to area.");
-						stop(true);
+						failCount++;
+					} else {
+						failCount = 0;
 					}
 				}
 			} else {

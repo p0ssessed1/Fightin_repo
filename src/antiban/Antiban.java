@@ -158,7 +158,7 @@ public class Antiban implements Runnable {
 		pos[1] = rn.nextInt(20) % 4;
 		while (pos[1] == pos[0]) {
 			if (rn.nextBoolean()) {
-				pos[1] = (pos[1] - (rn.nextInt(1) + 1)) % 4;
+				pos[1] = (pos[1] + (rn.nextInt(5) + 5)) % 4;
 			} else {
 				pos[1] = (pos[1] + (rn.nextInt(1) + 1)) % 4;
 			}
