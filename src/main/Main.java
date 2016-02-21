@@ -71,6 +71,9 @@ public class Main extends Script {
 
 	@Override
 	public int onLoop() throws InterruptedException {
+		if(!client.isLoggedIn()){
+			Script.sleep(1000);
+		}
 		sleep(random(450,600));
 		if(!threadHandler.isSettup()){
 			threadHandler.settup();

@@ -39,6 +39,13 @@ public class Eater implements Runnable {
 	@Override
 	public void run() {
 		while (!threadHandler.getThreadKillMessage()) {
+			if(!script.client.isLoggedIn()){
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					script.log("Antiban: Exception in Thread sleep handler." + e);
+				}
+			}
 			try {
 				Thread.sleep(rn.nextInt(700) + 500);
 			} catch (InterruptedException e) {

@@ -354,6 +354,13 @@ public class Antiban implements Runnable {
 	@Override
 	public void run() {
 		while (!threadHandler.getThreadKillMessage()) {
+			if(!script.client.isLoggedIn()){
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					script.log("Antiban: Exception in Thread sleep handler." + e);
+				}
+			}
 			rn = new Random(rnOver.nextInt());
 			try {
 				if (fighter.getCurrent() != null && fighter.getCurrent().getHealthPercent() < 25
@@ -375,8 +382,6 @@ public class Antiban implements Runnable {
 				Thread.sleep(rn.nextInt(100) + 200);
 			} catch (InterruptedException e) {
 				script.log("Antiban: Exception in Thread sleep handler." + e);
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 
