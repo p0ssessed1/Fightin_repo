@@ -147,30 +147,27 @@ public class Fighting {
 		// }
 		// }
 		// }
-		Timer local_timer = new Timer();
-		while (local_timer.timer(30000)) {
-			@SuppressWarnings("unchecked")
-			NPC monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
-					&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
-			if (isNpcValid(monster)) {
-				monster.interact(action);
-				t.reset();
-				while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + 7000)) {
-					Script.sleep(rn.nextInt(400) + 200);
-				}
-				t.reset();
-				while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
-					Script.sleep(rn.nextInt(400) + 200);
-				}
-
-				if (animated) {
-					script.log("Arracking: " + monster.getName());
-					current = monster;
-				} else {
-					current = null;
-				}
-				return animated;
+		@SuppressWarnings("unchecked")
+		NPC monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
+				&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+		if (isNpcValid(monster)) {
+			monster.interact(action);
+			t.reset();
+			while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + 5000)) {
+				Script.sleep(rn.nextInt(400) + 200);
 			}
+			t.reset();
+			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+				Script.sleep(rn.nextInt(400) + 200);
+			}
+
+			if (animated) {
+				script.log("Arracking: " + monster.getName());
+				current = monster;
+			} else {
+				current = null;
+			}
+			return animated;
 		}
 		return false;
 	}

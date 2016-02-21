@@ -11,7 +11,7 @@ import org.osbot.rs07.script.Script;
 import fighting.Fighting;
 
 public class DynamicArea {
-	final int MAX_AREA_SIZE = 4;
+	final int MAX_AREA_SIZE = 3;
 	Area overallArea;
 	int overallRadius;
 
