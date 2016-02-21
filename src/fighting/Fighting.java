@@ -306,4 +306,14 @@ public class Fighting {
 	public NPC getCurrent() {
 		return current;
 	}
+	
+	public boolean hasFood(){
+		Item[] inv = script.getInventory().getItems();
+		for(Item i: inv){
+			if(i != null && i.hasAction("Eat")){
+				return true;
+			}
+		}
+		return false;
+	}
 }

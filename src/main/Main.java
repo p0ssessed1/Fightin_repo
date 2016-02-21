@@ -16,7 +16,7 @@ import eatingThread.Eater;
 import fighting.Fighting;
 import simpleGui.SimpleGui;
 
-@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.3", version = .3, logo = "")
+@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.4", version = .4, logo = "")
 public class Main extends Script {
 	Banking bank;
 	Fighting fighter;
@@ -102,7 +102,7 @@ public class Main extends Script {
 		}
 		
 		
-		if (getInventory().isEmpty()) {
+		if (!fighter.hasFood()) {
 			if (bank.bank()) {
 				log("Banking Succesful");
 				fighter.reset();
