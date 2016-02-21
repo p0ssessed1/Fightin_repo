@@ -137,16 +137,16 @@ public class Fighting {
 			return clickNextMonster();
 		}
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
-//		if (!isInArea()) {
-//			script.log("Not In area.");
-//			if (!walkToArea()) {
-//				return false;
-//			} else {
-//				if (isFighting()) {
-//					return false;
-//				}
-//			}
-//		}
+		// if (!isInArea()) {
+		// script.log("Not In area.");
+		// if (!walkToArea()) {
+		// return false;
+		// } else {
+		// if (isFighting()) {
+		// return false;
+		// }
+		// }
+		// }
 		Timer local_timer = new Timer();
 		while (local_timer.timer(30000)) {
 			@SuppressWarnings("unchecked")
@@ -252,8 +252,33 @@ public class Fighting {
 
 	public boolean clickNextMonster() throws InterruptedException {
 		boolean animated = false;
-		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack()) {
-			if (script.getMenuAPI().selectAction(action)) {
+		if (rightClicked == null) {
+			while (script.getMenuAPI().isOpen()) {
+				Script.sleep(rn.nextInt() % 100);
+				script.getMouse().moveRandomly();
+				Script.sleep(rn.nextInt(500) + 400);
+			}
+		}
+		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack() && script.getMenuAPI().selectAction(action)) {
+			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 6000)) {
+				Script.sleep(100);
+			}
+			t.reset();
+			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+				Script.sleep(rn.nextInt(400) + 200);
+			}
+
+			if (animated) {
+				script.log("Arracking: " + rightClicked.getName());
+				current = rightClicked;
+			} else {
+				current = null;
+			}
+		} else {
+			if (rn.nextInt() % 10 > 5) {
+				rightClicked = getNextMonster();
+				EntityDestination targetDest = new EntityDestination(script.getBot(), rightClicked);
+				script.getMouse().click(targetDest, false);
 				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 6000)) {
 					Script.sleep(100);
 				}
@@ -269,30 +294,10 @@ public class Fighting {
 					current = null;
 				}
 			} else {
-				if (rn.nextInt() % 10 > 5) {
-					rightClicked = getNextMonster();
-					EntityDestination targetDest = new EntityDestination(script.getBot(), rightClicked);
-					script.getMouse().click(targetDest, false);
-					while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 6000)) {
-						Script.sleep(100);
-					}
-					t.reset();
-					while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
-						Script.sleep(rn.nextInt(400) + 200);
-					}
-
-					if (animated) {
-						script.log("Arracking: " + rightClicked.getName());
-						current = rightClicked;
-					} else {
-						current = null;
-					}
-				} else {
-					while (script.getMenuAPI().isOpen()) {
-						Script.sleep(rn.nextInt() % 100);
-						script.getMouse().moveRandomly();
-						Script.sleep(rn.nextInt(500) + 400);
-					}
+				while (script.getMenuAPI().isOpen()) {
+					Script.sleep(rn.nextInt() % 100);
+					script.getMouse().moveRandomly();
+					Script.sleep(rn.nextInt(500) + 400);
 				}
 			}
 		}
