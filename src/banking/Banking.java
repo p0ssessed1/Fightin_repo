@@ -1,27 +1,33 @@
 package banking;
 
-import java.util.List;
 import java.util.Random;
 
 import org.osbot.rs07.api.filter.NameFilter;
 import org.osbot.rs07.api.map.Area;
-import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.model.RS2Object;
 import org.osbot.rs07.script.Script;
 
+import main.ThreadHandler;
 import main.Timer;
 
 public class Banking {
 
 	Random rn;
 	Script script;
+	ThreadHandler threadHandler;
+	
 	NameFilter<Item> keepItems;
+	NameFilter<Item> foodItems;
 
 	Area bankArea;
 	Timer t = new Timer();
 
+	public void setThreadHandler(ThreadHandler threadHandler){
+		this.threadHandler = threadHandler;
+	}
+	
 	public Banking(Script script) {
 		this.script = script;
 		rn = new Random(script.myPlayer().getId());
@@ -41,6 +47,10 @@ public class Banking {
 
 	public void setKeepItems(NameFilter<Item> keepItemsFilter) {
 		this.keepItems = keepItemsFilter;
+	}
+
+	public void setFood(String foodItem) {
+		this.foodItems = new NameFilter<Item>(foodItem);
 	}
 
 	public boolean walkToArea() {
@@ -74,8 +84,13 @@ public class Banking {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public boolean bank() throws InterruptedException {
 		boolean isOpen = false;
+		if (bankArea == null) {
+			script.log("Banking disabled");
+			return false;
+		}
 		if (!bankArea.contains(script.myPlayer())) {
 			if (!walkToArea()) {
 				script.log("Could not walk to area.");
@@ -83,16 +98,16 @@ public class Banking {
 			}
 		}
 		t.reset();
-		while(t.timer(10000)){
+		while (t.timer(10000)) {
 			if (Script.random(0, 1) == 0) {
 				NPC banker = getBanker();
-				if(banker!= null){
+				if (banker != null) {
 					banker.interact("Bank");
 					break;
 				}
 			} else {
 				RS2Object bank = getBankBooth();
-				if(bank != null){
+				if (bank != null) {
 					bank.interact("Bank");
 					break;
 				}
@@ -105,12 +120,22 @@ public class Banking {
 			script.log("Could not open bank.");
 			return false;
 		}
-		script.sleep(rn.nextInt(1000) + 250);
-		if (script.getBank().depositAllExcept(keepItems)) {
-			return true;
+		Script.sleep(rn.nextInt(1000) + 250);
+		boolean banked = false;
+		if (keepItems != null) {
+			if (script.getBank().depositAllExcept(keepItems)) {
+				Script.sleep(rn.nextInt(1000) + 250);
+				if (foodItems != null) {
+					script.getBank().withdrawAll(foodItems);
+				}
+				banked = true;
+			}
 		} else {
-			script.log("Could not deposit all.");
-			return false;
+			if (script.getBank().depositAll()) {
+				banked = true;
+			}
 		}
+
+		return banked;
 	}
 }

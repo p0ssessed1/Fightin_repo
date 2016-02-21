@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 
+import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.ui.Message;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.script.Script;
@@ -11,7 +12,7 @@ import org.osbot.rs07.script.ScriptManifest;
 
 import antiban.Antiban;
 import banking.Banking;
-import dynamicArea.DynamicArea;
+import eatingThread.Eater;
 import fighting.Fighting;
 import simpleGui.SimpleGui;
 
@@ -20,6 +21,9 @@ public class Main extends Script {
 	Banking bank;
 	Fighting fighter;
 	Antiban antiban;
+	Eater eater;
+	ThreadHandler threadHandler;
+	
 	long timeStart;
 	int startStrengthLvl;
 	int startStrengthXp;
@@ -27,8 +31,6 @@ public class Main extends Script {
 	int startAttackXp;
 	int startHpLvl;
 	int startHpXp;
-	
-	Thread t;
 
 	@Override
 	public void onStart() throws InterruptedException {
@@ -39,6 +41,11 @@ public class Main extends Script {
 		log("Initialized fighter");
 		antiban = new Antiban(this, fighter);
 		log("Initialized antiban");
+		eater = new Eater(this, fighter);
+		threadHandler = new ThreadHandler(this, antiban, eater);
+		fighter.setThreadHandler(threadHandler);
+		bank.setThreadHandler(threadHandler);
+
 		getKeyboard().initializeModule();
 		getCamera().initializeModule();
 		timeStart = System.currentTimeMillis();
@@ -48,33 +55,32 @@ public class Main extends Script {
 		startAttackXp = getExperienceTracker().getGainedXP(Skill.ATTACK);
 		startHpLvl = getExperienceTracker().getGainedLevels(Skill.HITPOINTS);
 		startHpXp = getExperienceTracker().getGainedXP(Skill.HITPOINTS);
-		
-		SimpleGui gui = new SimpleGui(this, this.fighter, this.bank);
+
+		SimpleGui gui = new SimpleGui(this, this.fighter, this.bank, this.eater);
 		log("Initialized gui");
 		gui.Setup();
 		log("Setup Gui");
 		gui.Display();
-		
-		t = new Thread(antiban.AntibanHandler());
-		t.start();
 	}
 
 	@Override
 	public int onLoop() throws InterruptedException {
-		sleep(100);
-		if(!fighter.isFighting()){
-			if (fighter.attack()){
+		sleep(random(250,500));
+		if(!threadHandler.isSettup()){
+			threadHandler.settup();
+		}
+		if (!fighter.isFighting()) {
+			if (fighter.attack()) {
 				log("fighting.");
-				sleep(10000);
-			} else{
+				sleep(100);
+			} else {
 				log("fighting False");
 			}
 		}
-		if (getInventory().isFull()) {
+		if (getInventory().isEmpty()) {
 			if (bank.bank()) {
 				log("Banking Succesful");
-			}
-			else{
+			} else {
 				log("Banking Failed");
 			}
 		}
@@ -83,8 +89,22 @@ public class Main extends Script {
 	}
 
 	@Override
-	public void onMessage(Message message) {
+	public void onMessage(Message message) throws InterruptedException {
+		if (message.getMessage().contains("Oh dear")) {
+			died();
+		}
+	}
 
+	private void died() throws InterruptedException {
+		Item[] inv = getInventory().getItems();
+		for (Item i : inv) {
+			if (i != null && i.hasAction("Wield")) {
+				i.interact("Wield");
+				sleep(random(250, 600));
+			}
+		}
+		
+		bank.bank();
 	}
 	
 	@Override
@@ -108,9 +128,9 @@ public class Main extends Script {
 				+ (getExperienceTracker().getGainedLevels(Skill.HITPOINTS) - startHpLvl) + ")", 8, 80);
 
 	}
-	
+
 	@Override
-	public void onExit(){
-		t.interrupt();
+	public void onExit() {
+		threadHandler.kill();
 	}
 }

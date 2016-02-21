@@ -15,10 +15,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JSeparator;
+import javax.swing.JTextField;
 
 import org.osbot.rs07.api.filter.ActionFilter;
-import org.osbot.rs07.api.filter.ItemListFilter;
 import org.osbot.rs07.api.filter.NameFilter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
@@ -27,6 +26,7 @@ import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.script.Script;
 
 import banking.Banking;
+import eatingThread.Eater;
 import fighting.Fighting;
 
 public class SimpleGui implements ActionListener {
@@ -48,12 +48,16 @@ public class SimpleGui implements ActionListener {
 	boolean start = false;
 	Banking bank;
 	Fighting fight;
+	Eater eater;
 
 	JFrame frame = new JFrame("Dynamic Fighter");
 	NameFilter<Item> keepItems;
 	List<JCheckBox> fightingOptions = new LinkedList<JCheckBox>();
 	List<JRadioButton> banks = new LinkedList<JRadioButton>();
 	List<JCheckBox> keep = new LinkedList<JCheckBox>();
+	List<JRadioButton> food = new LinkedList<JRadioButton>();
+	JTextField health = new JTextField();
+	ButtonGroup bg_f = new ButtonGroup();
 	ButtonGroup bg_b = new ButtonGroup();
 	ActionFilter<NPC> f;
 	/*
@@ -62,10 +66,11 @@ public class SimpleGui implements ActionListener {
 	 */
 	JPanel panel = new JPanel(new GridLayout(0, 1));
 
-	public SimpleGui(Script script, Fighting fighter, Banking bank) {
+	public SimpleGui(Script script, Fighting fighter, Banking bank, Eater eater) {
 		this.script = script;
 		this.fight = fighter;
 		this.bank = bank;
+		this.eater = eater;
 	}
 
 	/**
@@ -76,14 +81,25 @@ public class SimpleGui implements ActionListener {
 	public void Setup() {
 		List<NPC> monsters = script.getNpcs().getAll();
 		List<String> monsterNames = new LinkedList<String>();
-		String[] spot_actions = new String[2];
+		JPanel fightingPanel = new JPanel(new GridLayout(0, 3));
+		fightingPanel.add(new Label("Monster to fight:"));
+		fightingPanel.add(new Label("   "));
+		JPanel bankPanel = new JPanel(new GridLayout(0, 3));
+		bankPanel.add(new Label("Banks: "));
+		bankPanel.add(new Label("       "));
+		JPanel foodPanel = new JPanel(new GridLayout(0,2));
+		foodPanel.add(new Label("Choose Food from inventory:"));
+		JPanel optionPanel = new JPanel(new GridLayout(0, 2));
+		optionPanel.add(new Label("Keep Items:"));
 		for (NPC n : monsters) {
 			if (n != null && n.hasAction("Attack") && n.exists() && script.map.canReach(n)) {
+				script.log("Monster located.");
 				int id = n.getId();
 				if (id != -1) {
 					for (NPC i : script.getNpcs().get(n.getX(), n.getY())) {
 						if (i.getId() == id) {
-							if (!monsterNames.contains(n)) {
+							if (!monsterNames.contains(n.getName())) {
+								script.log("Monster added.");
 								monsterNames.add(n.getName());
 								fightingOptions.add(new JCheckBox(n.getName()));
 							}
@@ -92,15 +108,11 @@ public class SimpleGui implements ActionListener {
 				}
 			}
 		}
-		JPanel fightingPanel = new JPanel(new GridLayout(0, 3));
-		fightingPanel.add(new Label("Monster to fight:"));
-		fightingPanel.add(new Label("   "));
-		JPanel bankPanel = new JPanel(new GridLayout(0, 3));
-		bankPanel.add(new Label("Banks: "));
-		bankPanel.add(new Label("       "));
-		JPanel optionPanel = new JPanel(new GridLayout(0, 2));
-		optionPanel.add(new Label("Keep Items:"));
 
+		for(JCheckBox b : fightingOptions){
+			fightingPanel.add(b);
+		}
+		
 		for (String s : BANK_NAMES) {
 			banks.add(new JRadioButton(s));
 		}
@@ -112,10 +124,25 @@ public class SimpleGui implements ActionListener {
 
 		Item[] inv = script.getInventory().getItems();
 		List<String> exclusiveInv = new LinkedList<String>();
+		List<Item> exclusiveItemInv = new LinkedList<Item>();
 		for (Item i : inv) {
-			if (!exclusiveInv.contains(i.getName())) {
-				exclusiveInv.add(i.getName());
+			if(i != null){
+				if (!exclusiveInv.contains(i.getName())) {
+					exclusiveInv.add(i.getName());
+					exclusiveItemInv.add(i);
+				}
 			}
+		}
+		
+		for(Item i : exclusiveItemInv){
+			if(i != null && i.hasAction("Eat")){
+				food.add(new JRadioButton(i.getName()));
+			}
+		}
+		
+		for(JRadioButton b: food){
+			bg_f.add(b);
+			foodPanel.add(b);
 		}
 
 		for (String i : exclusiveInv) {
@@ -128,14 +155,15 @@ public class SimpleGui implements ActionListener {
 			optionPanel.add(b);
 		}
 
+		optionPanel.add(new Label("Health to Eat at:"));
+		optionPanel.add(health);
+		
 		JButton start = new JButton("Start");
 		start.addActionListener(this);
 		panel.add(fightingPanel, BorderLayout.NORTH);
-		panel.add(new JSeparator());
 		panel.add(bankPanel);
-		panel.add(new JSeparator());
 		panel.add(optionPanel);
-		panel.add(new JSeparator());
+		panel.add(foodPanel);
 		panel.add(start);
 		frame.add(panel);
 		frame.pack();
@@ -161,24 +189,46 @@ public class SimpleGui implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent ae) {
-		try {
-			String[] to_keep = new String[keep.size()];
+			List<String> to_keep = new LinkedList<String>();
+			String[] keeping = null;
+			String foodChosen = null;
 			JCheckBox local;
 			for (int i = 0; i < keep.size(); i++) {
 				local = keep.get(i);
 				if (local.isSelected()) {
-					to_keep[i] = local.getText();
+					to_keep.add(local.getText());
 				}
 			}
-			keepItems = new NameFilter<Item>(to_keep);
-			bank.setKeepItems(keepItems);
+			if(!to_keep.isEmpty()){
+				keeping = new String[to_keep.size()];
+				int i = 0;
+				for(String s: to_keep){
+					keeping[i] = s;
+					i++;
+				}
+			}
+			if(keeping != null){
+				keepItems = new NameFilter<Item>(keeping);
+				bank.setKeepItems(keepItems);
+			}
+
+			for(JRadioButton b: food){
+				if(b.isSelected()){
+					foodChosen = b.getText();
+				}
+			}
+			if(foodChosen != null){
+				bank.setFood(foodChosen);
+				fight.setFood(foodChosen);
+			}
+			
 			String selectedBank = null;
 			for (JRadioButton b : banks) {
 				if (b.isSelected()) {
 					selectedBank = b.getText();
 				}
 			}
-			String[] selectedMonsters = null;
+			String[] selectedMonsters = new String[fightingOptions.size()];
 			int index = 0;
 			for (JCheckBox f : fightingOptions) {
 				if (f.isSelected()) {
@@ -186,13 +236,22 @@ public class SimpleGui implements ActionListener {
 					index++;
 				}
 			}
-			bank.setArea(BANKS[BANK_NAMES.indexOf(selectedBank)]);
+			if(selectedBank != null){
+				bank.setArea(BANKS[BANK_NAMES.indexOf(selectedBank)]);
+			}
+			try{
+			if(health != null && Integer.valueOf(health.getText()) != null){
+				eater.setHealth(Integer.valueOf(health.getText()));
+			}
+			}catch(Exception e){
+				script.log("Setting health failed. Exception: " + e);
+			}
 			fight.setMonsters(selectedMonsters);
 			script.log("Changing start.");
 			start = true;
-		} catch (Exception e) {
-			script.log("Exception in actionPerformed." + e);
-		}
+//		} catch (Exception e) {
+//			script.log("Exception in actionPerformed." + e);
+//		}
 	}
 
 }

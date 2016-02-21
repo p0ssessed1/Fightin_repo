@@ -1,13 +1,11 @@
 package dynamicArea;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.NPC;
-import org.osbot.rs07.script.Script;
 import fighting.Fighting;
 
 public class DynamicArea {
@@ -21,14 +19,7 @@ public class DynamicArea {
 
 	public List<Area> CreateAreas(List<NPC> spots) {
 		List<Area> areas = new LinkedList<Area>();
-		for (NPC n : spots) {
-			if (fighter.isNpcValid(n)) {
-				fighter.script.log("Added area to return: " + n.getArea(MAX_AREA_SIZE));
-				areas.add(n.getArea(MAX_AREA_SIZE));
-			}
-		}
-		
-		fighter.script.log("is areas empty?." + areas.isEmpty());
+		areas.add(fighter.script.myPlayer().getArea(MAX_AREA_SIZE));
 		return areas;
 	}
 	
@@ -48,6 +39,8 @@ public class DynamicArea {
 					&& !a.contains(fighter.script.myPlayer())){
 				tryPosition = a.getRandomPosition();
 				closestArea = a;
+			} else if(a.contains(fighter.script.myPlayer())){
+				return a;
 			}
 		}
 		return closestArea;
@@ -58,15 +51,11 @@ public class DynamicArea {
 		List<Area> areas = new LinkedList<Area>();
 		areas = currentAreas;
 		boolean added = false;
-		List<Position> currentAreaPositions = new LinkedList<Position>();
 		for (int i = 0; i < spots.size(); i++) {
 			if (fighter.isNpcValid(spots.get(i))) {
-				currentAreaPositions = currentAreas.get(i).getPositions();
-				if(currentAreaPositions.contains(spots.get(i).getPosition())){
-					fighter.script.log("Added area: " + spots.get(i).getArea(MAX_AREA_SIZE));
-					areas.add(spots.get(i).getArea(MAX_AREA_SIZE));
-					added = true;
-				}
+				fighter.script.log("Added area: " + spots.get(i).getArea(MAX_AREA_SIZE));
+				areas.add(spots.get(i).getArea(MAX_AREA_SIZE));
+				added = true;
 			}
 		}
 		
