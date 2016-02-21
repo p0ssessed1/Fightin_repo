@@ -88,7 +88,6 @@ public class Banking {
 	public boolean bank() throws InterruptedException {
 		boolean isOpen = false;
 		if (bankArea == null) {
-			script.log("Banking disabled");
 			return false;
 		}
 		if (!bankArea.contains(script.myPlayer())) {

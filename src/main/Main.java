@@ -16,7 +16,7 @@ import eatingThread.Eater;
 import fighting.Fighting;
 import simpleGui.SimpleGui;
 
-@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.1", version = .1, logo = "")
+@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.3", version = .3, logo = "")
 public class Main extends Script {
 	Banking bank;
 	Fighting fighter;
@@ -45,9 +45,15 @@ public class Main extends Script {
 		threadHandler = new ThreadHandler(this, antiban, eater);
 		fighter.setThreadHandler(threadHandler);
 		bank.setThreadHandler(threadHandler);
+		antiban.setThreadHandler(threadHandler);
+		eater.setThreadHandler(threadHandler);
 
 		getKeyboard().initializeModule();
 		getCamera().initializeModule();
+		getInventory().initializeModule();
+		getCombat().initializeModule();
+		getMouse().initializeModule();
+	
 		timeStart = System.currentTimeMillis();
 		startStrengthLvl = getExperienceTracker().getGainedLevels(Skill.STRENGTH);
 		startStrengthXp = getExperienceTracker().getGainedXP(Skill.STRENGTH);
@@ -65,23 +71,28 @@ public class Main extends Script {
 
 	@Override
 	public int onLoop() throws InterruptedException {
-		sleep(random(250,500));
+		sleep(random(450,600));
 		if(!threadHandler.isSettup()){
 			threadHandler.settup();
 		}
 		if (!fighter.isFighting()) {
 			if (fighter.attack()) {
-				log("fighting.");
+				log("Attacked.");
 				sleep(100);
 			} else {
-				log("fighting False");
+				log("Failed to attack.");
 			}
+		}else{
+			sleep(random(500,1000));
 		}
+		
+		
 		if (getInventory().isEmpty()) {
 			if (bank.bank()) {
 				log("Banking Succesful");
+				fighter.reset();
 			} else {
-				log("Banking Failed");
+				//log("Banking Failed");
 			}
 		}
 
@@ -90,12 +101,14 @@ public class Main extends Script {
 
 	@Override
 	public void onMessage(Message message) throws InterruptedException {
+		log("onMessage: " + message.getMessage());
 		if (message.getMessage().contains("Oh dear")) {
 			died();
 		}
 	}
 
 	private void died() throws InterruptedException {
+		Script.sleep(random(150,500));
 		Item[] inv = getInventory().getItems();
 		for (Item i : inv) {
 			if (i != null && i.hasAction("Wield")) {
@@ -103,8 +116,8 @@ public class Main extends Script {
 				sleep(random(250, 600));
 			}
 		}
+		fighter.reset();
 		
-		bank.bank();
 	}
 	
 	@Override
@@ -119,13 +132,13 @@ public class Main extends Script {
 		g.drawString("x", (int) getMouse().getPosition().getX() - 4, (int) getMouse().getPosition().getY() + 5);
 		g.drawString("Time Running: " + (hours >= 10 ? "" + hours : "0" + hours) + ":"
 				+ (minutes >= 10 ? "" + minutes : "0" + minutes) + ":" + (seconds >= 10 ? "" + seconds : "0" + seconds),
-				8, 65);
-		g.drawString("fightering XP: " + (getExperienceTracker().getGainedXP(Skill.STRENGTH) - startStrengthXp) + " ("
-				+ (getExperienceTracker().getGainedLevels(Skill.STRENGTH) - startStrengthLvl) + ")", 8, 80);
-		g.drawString("fightering XP: " + (getExperienceTracker().getGainedXP(Skill.ATTACK) - startAttackXp) + " ("
+				8, 50);
+		g.drawString("Strength XP: " + (getExperienceTracker().getGainedXP(Skill.STRENGTH) - startStrengthXp) + " ("
+				+ (getExperienceTracker().getGainedLevels(Skill.STRENGTH) - startStrengthLvl) + ")", 8, 65);
+		g.drawString("Attack XP: " + (getExperienceTracker().getGainedXP(Skill.ATTACK) - startAttackXp) + " ("
 				+ (getExperienceTracker().getGainedLevels(Skill.ATTACK) - startAttackLvl) + ")", 8, 80);
-		g.drawString("fightering XP: " + (getExperienceTracker().getGainedXP(Skill.HITPOINTS) - startHpXp) + " ("
-				+ (getExperienceTracker().getGainedLevels(Skill.HITPOINTS) - startHpLvl) + ")", 8, 80);
+		g.drawString("Hitpoints XP: " + (getExperienceTracker().getGainedXP(Skill.HITPOINTS) - startHpXp) + " ("
+				+ (getExperienceTracker().getGainedLevels(Skill.HITPOINTS) - startHpLvl) + ")", 8, 95);
 
 	}
 

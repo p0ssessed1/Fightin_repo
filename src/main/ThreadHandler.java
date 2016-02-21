@@ -18,6 +18,7 @@ public class ThreadHandler {
 	List<Thread> threadBank = new LinkedList<Thread>();
 	
 	boolean settupStatus = false;
+	volatile boolean killThread = false;
 
 	public ThreadHandler( Script script, Antiban antiban, Eater eater){
 		this.script = script;
@@ -57,8 +58,10 @@ public class ThreadHandler {
 	}
 	
 	public void kill(){
-		for(Thread t: threadBank){
-			t.interrupt();
-		}
+		killThread = true;
+	}
+	
+	public boolean getThreadKillMessage(){
+		return killThread;
 	}
 }

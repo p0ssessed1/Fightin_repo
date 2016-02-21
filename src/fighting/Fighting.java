@@ -7,9 +7,9 @@ import java.util.Random;
 import org.osbot.rs07.api.filter.ActionFilter;
 import org.osbot.rs07.api.filter.NameFilter;
 import org.osbot.rs07.api.map.Area;
-import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.model.NPC;
+import org.osbot.rs07.input.mouse.EntityDestination;
 import org.osbot.rs07.script.Script;
 
 import dynamicArea.DynamicArea;
@@ -32,19 +32,24 @@ public class Fighting {
 	Timer t = new Timer();
 
 	NPC rightClicked = null;
-	
-	public void setThreadHandler(ThreadHandler threadHandler){
+
+	public void reset() {
+		current = null;
+		rightClicked = null;
+	}
+
+	public void setThreadHandler(ThreadHandler threadHandler) {
 		this.threadHandler = threadHandler;
 	}
-	
+
 	public void setFood(String foodItem) {
 		this.foodItem = new NameFilter<Item>(foodItem);
 	}
-	
-	public NameFilter<Item> getFood(){
+
+	public NameFilter<Item> getFood() {
 		return foodItem;
 	}
-	
+
 	public Fighting(Script script) {
 		this.script = script;
 		this.dynamicArea = new DynamicArea(this);
@@ -64,18 +69,18 @@ public class Fighting {
 	 * @throws InterruptedException
 	 */
 	public boolean isFighting() throws InterruptedException {
-		if (isInArea()) {
-			if (current != null) {
-				for (int i = 0; i < 15; i++) {
-					Script.sleep(rn.nextInt(150) + 50);
-					if (script.myPlayer().isAnimating() ||
-						current.getCurrentHealth() > 0 ||
-						script.getCombat().isFighting()) {
-						script.log("I am in combat.");
+		if (current != null) {
+			for (int i = 0; i < 15; i++) {
+				Script.sleep(rn.nextInt(150) + 50);
+				try {
+					if (script.myPlayer().isAnimating() || current.getCurrentHealth() > 0
+							|| script.getCombat().isFighting()) {
 						return true;
 					} else if (i == 14) {
 						return false;
 					}
+				} catch (Exception e) {
+					return false;
 				}
 			}
 		}
@@ -94,25 +99,25 @@ public class Fighting {
 	 */
 
 	/**
-	 * Walk to the closest fighting area. Uses WebWalk.
-	 * Gathers new areas to walk to based off of monster locations.
+	 * Walk to the closest fighting area. Uses WebWalk. Gathers new areas to
+	 * walk to based off of monster locations.
 	 * 
 	 * @return True if walking is successful. False if already in area or
 	 *         unsuccessful.
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
 	public boolean walkToArea() throws InterruptedException {
 		boolean walked = false;
 		if (!fightingAreas.contains(script.myPlayer())) {
 			script.log("fighting aeas is empty?" + fightingAreas.isEmpty());
 			script.log("closest areas is null? " + (dynamicArea.getClosestArea(fightingAreas) == null));
-			if(!dynamicArea.getClosestArea(fightingAreas).contains(script.myPlayer())){
-				if(script.getWalking().webWalk(dynamicArea.getClosestArea(fightingAreas))){
-					Script.sleep(rn.nextInt(100)+200);
+			if (!dynamicArea.getClosestArea(fightingAreas).contains(script.myPlayer())) {
+				if (script.getWalking().webWalk(dynamicArea.getClosestArea(fightingAreas))) {
+					Script.sleep(rn.nextInt(100) + 200);
 					walked = true;
 				}
 			}
-			
+
 		}
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
 		return walked;
@@ -128,55 +133,42 @@ public class Fighting {
 	 */
 	public boolean attack() throws InterruptedException {
 		boolean animated = false;
-		script.log("In attack.");
-		if(!isInArea()){
+		if (script.getMenuAPI().isOpen()) {
+			return clickNextMonster();
+		}
+		if (!isInArea()) {
 			script.log("Not In area.");
-			if(!walkToArea()){
+			if (!walkToArea()) {
 				return false;
-			}
-		}
-		if(script.getMenuAPI().isOpen()){
-			if(script.getMenuAPI().getMenu().contains("Attack")){
-				threadHandler.getEatingThread().wait();
-				boolean ret = clickNextMonster();
-				threadHandler.getEatingThread().notify();
-				return ret;
-			}else{
-				rightClicked = null;
-				script.getMouse().moveOutsideScreen();
-				return false;
-			}
-		}
-		if (isInArea()) {
-			script.log("In area.");
-			Timer local_timer = new Timer();
-			while (local_timer.timer(30000)) {
-				@SuppressWarnings("unchecked")
-				NPC monster = script.getNpcs().closest(true, n -> actionFilter.match(n) &&
-						monsterFilter.match(n) && !(n.isUnderAttack() || n.isAnimating()));
-				script.log("Got NPC.");
-				if (isNpcValid(monster)) {
-					script.log("About to interract.");
-					threadHandler.getEatingThread().wait();
-					monster.interact(action);
-					threadHandler.getEatingThread().notify();
-					t.reset();
-					while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(1000) + 5000)) {
-						Script.sleep(rn.nextInt(200) + 100);
-					}
-					t.reset();
-					while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
-						Script.sleep(rn.nextInt(200) + 100);
-					}
-
-					script.log("Finished waiting.");
-					if (animated) {
-						current = monster;
-					} else {
-						current = null;
-					}
-					return animated;
+			} else {
+				if (isFighting()) {
+					return false;
 				}
+			}
+		}
+		Timer local_timer = new Timer();
+		while (local_timer.timer(30000)) {
+			@SuppressWarnings("unchecked")
+			NPC monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
+					&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+			if (isNpcValid(monster)) {
+				monster.interact(action);
+				t.reset();
+				while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(1000) + 5000)) {
+					Script.sleep(rn.nextInt(400) + 200);
+				}
+				t.reset();
+				while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+					Script.sleep(rn.nextInt(400) + 200);
+				}
+
+				if (animated) {
+					script.log("Arracking: " + monster.getName());
+					current = monster;
+				} else {
+					current = null;
+				}
+				return animated;
 			}
 		}
 		return false;
@@ -190,7 +182,7 @@ public class Fighting {
 	 */
 	public boolean isNpcValid(NPC npc) {
 		if (npc != null && script.map.canReach(npc)) {
-			if (actionFilter.match(npc) && monsterFilter.match(npc)) {
+			if (actionFilter.match(npc) && monsterFilter.match(npc) && npc.isVisible()) {
 				int id = npc.getId();
 				if (id != -1) {
 					for (NPC i : script.getNpcs().get(npc.getX(), npc.getY())) {
@@ -247,50 +239,68 @@ public class Fighting {
 	 * 
 	 * @return NPC : npc of next spot that is closest null if none.
 	 */
+	@SuppressWarnings("unchecked")
 	public NPC getNextMonster() {
 		List<NPC> npcs = script.getNpcs().getAll();
-		Position myPosition = script.myPosition();
-		NPC temp1;
-		NPC temp2;
-		NPC nearest = null;
-		for (int i = 1; i < npcs.size(); i++) {
-			temp1 = npcs.get(i);
-			temp2 = npcs.get(i - 1);
-			if (myPosition.distance(temp1) > myPosition.distance(temp2)) {
-				if (monsterFilter.match(temp2)) {
-					if (temp2 != current) {
-						nearest = temp2;
-					}
-				}
-			} else {
-				if (isNpcValid(npcs.get(i))) {
-					if (monsterFilter.match(temp1)) {
-						if (temp1 != current) {
-							nearest = temp1;
-						}
-					}
-				}
-			}
-		}
+		NPC nearest = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
+				&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+		dynamicArea.addExclusiveAreas(npcs, fightingAreas);
 		rightClicked = nearest;
 		return nearest;
 	}
 
 	public boolean clickNextMonster() throws InterruptedException {
-		if (script.getMenuAPI().isOpen()) {
+		boolean animated = false;
+		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack()) {
 			if (script.getMenuAPI().selectAction(action)) {
 				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 1000)) {
 					Script.sleep(100);
 				}
-				if (isFighting()) {
+				t.reset();
+				while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+					Script.sleep(rn.nextInt(400) + 200);
+				}
+
+				if (animated) {
+					script.log("Arracking: " + rightClicked.getName());
 					current = rightClicked;
-					rightClicked = null;
 				} else {
 					current = null;
 				}
-				return true;
+			} else {
+				if (rn.nextInt() % 10 > 5) {
+					rightClicked = getNextMonster();
+					EntityDestination targetDest = new EntityDestination(script.getBot(), rightClicked);
+					script.getMouse().click(targetDest, false);
+					while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 1000)) {
+						Script.sleep(100);
+					}
+					t.reset();
+					while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+						Script.sleep(rn.nextInt(400) + 200);
+					}
+
+					if (animated) {
+						script.log("Arracking: " + rightClicked.getName());
+						current = rightClicked;
+					} else {
+						current = null;
+					}
+				} else {
+					while (script.getMenuAPI().isOpen()) {
+						Script.sleep(rn.nextInt() % 100);
+						script.getMouse().moveRandomly();
+						Script.sleep(rn.nextInt(500) + 400);
+					}
+				}
 			}
 		}
-		return false;
+
+		rightClicked = null;
+		return animated;
+	}
+
+	public NPC getCurrent() {
+		return current;
 	}
 }

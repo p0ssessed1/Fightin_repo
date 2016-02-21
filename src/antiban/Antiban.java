@@ -9,6 +9,7 @@ import org.osbot.rs07.input.mouse.EntityDestination;
 import org.osbot.rs07.script.Script;
 
 import fighting.Fighting;
+import main.ThreadHandler;
 import main.Timer;
 
 public class Antiban implements Runnable {
@@ -21,7 +22,19 @@ public class Antiban implements Runnable {
 	Random rnOver;
 	Script script;
 	Fighting fighter;
+	ThreadHandler threadHandler;
+
+	enum State {
+		CameraMoved, MouseMoved, HoverSkill, RightClicked
+	};
+
+	State state;
+
 	Timer t = new Timer();
+
+	public void setThreadHandler(ThreadHandler threadHandler) {
+		this.threadHandler = threadHandler;
+	}
 
 	public Antiban(Script script, Fighting fighter) {
 		this.script = script;
@@ -37,48 +50,48 @@ public class Antiban implements Runnable {
 	 */
 	public void AntibanHandler() throws InterruptedException {
 		if (fighter.isFighting()) {
-			switch (rn.nextInt(30)) {
+			switch (rn.nextInt(20)) {
 			case 0:
-				script.log("Script Sleep Medium Period");
+				script.log("Antiban: Script Sleep Medium Period");
 				Script.sleep(rn.nextInt(500) + 900);
 			case 1:
 				/* Move Mouse */
-				script.log("Move Mouse.");
+				script.log("Antiban: Move Mouse.");
 				moveMouse();
 				break;
 			case 2:
 				/* Move Camera */
-				script.log("Move Camera.");
+				script.log("Antiban: Move Camera.");
 				moveCamera();
 				break;
 			case 3:
 				/* Right Click Hover */
-				script.log("Right Click.");
+				script.log("Antiban: Right Click.");
 				rightClickNext();
 				break;
 			case 4:
 				/* Move Camera */
-				script.log("Move Camera.");
+				script.log("Antiban: Move Camera.");
 				moveCamera();
 			case 5:
 				/* Move Mouse */
-				script.log("Move Camera.");
+				script.log("Antiban: Move Camera.");
 				moveCamera();
 				break;
 			case 6:
-				script.log("Script Sleep small period");
+				script.log("Antiban: Script Sleep small period");
 				Script.sleep(rn.nextInt(400) + 400);
 				break;
 			case 7:
 				/* Sleep until 1s after done fishing. */
-				script.log("Antiban Sleep during combat.");
+				script.log("Antiban: Antiban Sleep during combat.");
 				while (fighter.isFighting()) {
 					Thread.sleep(rn.nextInt(100) + 100);
 				}
 				break;
 			case 8:
 				/* Hover Skill. */
-				script.log("Check XP return to inventory.");
+				script.log("Antiban: Check XP return to inventory.");
 				if (hoverSkill()) {
 
 					Thread.sleep(rn.nextInt(900) + 300);
@@ -88,10 +101,45 @@ public class Antiban implements Runnable {
 				}
 				break;
 			case 9:
-				script.log("Check XP & move mouse.");
+				script.log("Antiban: Check XP & move mouse.");
 				if (hoverSkill()) {
 					Thread.sleep(rn.nextInt(900) + 500);
 					moveMouse();
+				}
+				break;
+			case 10:
+				/* Right Click Hover */
+				script.log("Antiban: Right Click medium sleep.");
+				rightClickNext();
+				Script.sleep(rn.nextInt(500) + 900);
+				break;
+			case 11:
+				/* Right Click Hover */
+				script.log("Antiban: Right Click until done fighting.");
+				rightClickNext();
+				while (fighter.isFighting()) {
+					Thread.sleep(100);
+				}
+				break;
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+			case 16:
+			case 17:
+				int[] sideKey = { LEFT_KEY, RIGHT_KEY };
+				int chosenKey = rn.nextInt(100) % 2;
+				int[] keysPressed = { UP_KEY, sideKey[chosenKey] };
+				int firstReleased = rn.nextInt(150) % 2;
+				int nextReleased = (firstReleased + 1) % 2;
+				if (script.getCamera().getYawAngle() < 45) {
+					script.getKeyboard().pressKey(UP_KEY);
+					Thread.sleep(rn.nextInt(10) + 10);
+					script.getKeyboard().pressKey(sideKey[chosenKey]);
+					Thread.sleep(rn.nextInt(500) + 500);
+					script.getKeyboard().releaseKey(keysPressed[firstReleased]);
+					Thread.sleep(rn.nextInt(15)+1);
+					script.getKeyboard().releaseKey(keysPressed[nextReleased]);
 				}
 				break;
 			}
@@ -99,33 +147,62 @@ public class Antiban implements Runnable {
 	}
 
 	private boolean moveCamera() throws InterruptedException {
-		if (!script.getMouse().isOnScreen()) {
+		if (!script.getMouse().isOnScreen() || state == State.CameraMoved) {
 			return false;
 		}
-		boolean left = false;
-		boolean right = false;
-		boolean down = false;
-		boolean up = false;
+		int[] Keys = { UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY };
+		boolean[] taken = { false, false, false, false };
+		int[] pos = { 5, 5, 5, 5 };
+		pos[0] = rn.nextInt(10) % 4;
+		taken[pos[0]] = true;
+		pos[1] = rn.nextInt(20) % 4;
+		while (pos[1] == pos[0]) {
+			if (rn.nextBoolean()) {
+				pos[1] = (pos[1] - (rn.nextInt(1) + 1)) % 4;
+			} else {
+				pos[1] = (pos[1] + (rn.nextInt(1) + 1)) % 4;
+			}
+		}
+		taken[pos[1]] = true;
+		for (int i = 0; i < 4; i++) {
+			if (!taken[i]) {
+				if (rn.nextBoolean()) {
+					if (pos[2] == 5) {
+						pos[2] = i;
+						taken[i] = true;
+					} else {
+						pos[3] = i;
+						taken[i] = true;
+					}
+
+				} else {
+					if (pos[3] == 5) {
+						pos[3] = i;
+						taken[i] = true;
+					} else {
+						pos[2] = i;
+						taken[i] = true;
+					}
+				}
+			}
+		}
+
 		int camera_end_val = rn.nextInt(50) + 40;
 		if (rn.nextInt(100) > rn.nextInt(10) + 20) {
 			if (rn.nextInt(1) == 0) {
 				script.getKeyboard().pressKey(LEFT_KEY);
-				left = true;
 			} else if (rn.nextInt(1) == 0) {
 				script.getKeyboard().pressKey(RIGHT_KEY);
-				right = true;
 			}
-
+			Thread.sleep(rn.nextInt(100) + rn.nextInt(100) + 1);
 			t.reset();
 			if (script.getCamera().getPitchAngle() < camera_end_val) {
 				script.getKeyboard().pressKey(UP_KEY);
-				up = true;
 				while (script.getCamera().getPitchAngle() < camera_end_val && !script.getBot().isHumanInputEnabled()
 						&& t.timer(2000)) {
 				}
 			} else {
 				script.getKeyboard().pressKey(DOWN_KEY);
-				down = true;
 				while (script.getCamera().getPitchAngle() > camera_end_val && !script.getBot().isHumanInputEnabled()
 						&& t.timer(2000)) {
 				}
@@ -133,33 +210,24 @@ public class Antiban implements Runnable {
 		} else {
 			if (rn.nextBoolean()) {
 				script.getKeyboard().pressKey(LEFT_KEY);
-				left = true;
 			} else {
 				script.getKeyboard().pressKey(RIGHT_KEY);
-				right = true;
 			}
-			if (rn.nextInt(100) < rn.nextInt(50) + 20) {
+			Thread.sleep(rn.nextInt(100) + rn.nextInt(100) + 1);
+			if (rn.nextInt(100) < rn.nextInt(30) + 70) {
 				script.getKeyboard().pressKey(UP_KEY);
-				up = true;
 			} else {
 				script.getKeyboard().pressKey(DOWN_KEY);
-				down = true;
 			}
 
-			Thread.sleep(rn.nextInt(500) + 700);
+			Thread.sleep(rn.nextInt(500) + rn.nextInt(300) + 10);
 		}
-		if (up) {
-			script.getKeyboard().releaseKey(UP_KEY);
+
+		for (int i = 0; i < 4; i++) {
+			script.getKeyboard().releaseKey(Keys[pos[i]]);
+			Thread.sleep(rn.nextInt(100) + rn.nextInt(12));
 		}
-		if (left) {
-			script.getKeyboard().releaseKey(LEFT_KEY);
-		}
-		if (right) {
-			script.getKeyboard().releaseKey(RIGHT_KEY);
-		}
-		if (down) {
-			script.getKeyboard().releaseKey(DOWN_KEY);
-		}
+		state = State.CameraMoved;
 		return true;
 	}
 
@@ -170,6 +238,10 @@ public class Antiban implements Runnable {
 	 * @throws InterruptedException
 	 */
 	private boolean moveMouse() throws InterruptedException {
+		if (state == State.MouseMoved) {
+			return false;
+		}
+		state = State.MouseMoved;
 		switch (rn.nextInt(10)) {
 		case 0:
 			if (fighter.isFighting()) {
@@ -228,7 +300,6 @@ public class Antiban implements Runnable {
 				Thread.sleep(100);
 			}
 		}
-
 		return false;
 	}
 
@@ -256,21 +327,19 @@ public class Antiban implements Runnable {
 				return false;
 			}
 		}
-
-		if (rn.nextInt(10) == 0) {
-			while (fighter.isFighting()) {
-				Thread.sleep(100);
-			}
-		}
-
+		state = State.RightClicked;
 		return true;
 	}
 
 	public boolean hoverSkill() throws InterruptedException {
+		if (state == State.HoverSkill) {
+			return false;
+		}
 		Skill[] skillArray = { Skill.ATTACK, Skill.STRENGTH, Skill.HITPOINTS, Skill.DEFENCE, Skill.PRAYER };
 		Skill skill = skillArray[rn.nextInt(skillArray.length - 1)];
 		if (script.getSkills().hoverSkill(skill)) {
 			Thread.sleep(rn.nextInt(300) + 700);
+			state = State.HoverSkill;
 			return true;
 		}
 
@@ -284,23 +353,28 @@ public class Antiban implements Runnable {
 
 	@Override
 	public void run() {
-		while (true) {
+		while (!threadHandler.getThreadKillMessage()) {
 			rn = new Random(rnOver.nextInt());
 			try {
-				AntibanHandler();
+				if (fighter.getCurrent() != null && fighter.getCurrent().getHealthPercent() < 25
+						&& state == State.RightClicked) {
+					Thread.sleep(100);
+				} else {
+					AntibanHandler();
+				}
 				if (rn.nextInt(10) == 0) {
 					while (fighter.isFighting()) {
 						Thread.sleep(100);
 					}
 				}
 			} catch (InterruptedException e) {
-				script.log("Exception in AntiBan Thread handler." + e);
+				script.log("Antiban: Exception in AntiBan Thread handler." + e);
 				e.printStackTrace();
 			}
 			try {
 				Thread.sleep(rn.nextInt(100) + 200);
 			} catch (InterruptedException e) {
-				script.log("Exception in Thread sleep handler." + e);
+				script.log("Antiban: Exception in Thread sleep handler." + e);
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
