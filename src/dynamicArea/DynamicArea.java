@@ -11,7 +11,7 @@ import org.osbot.rs07.script.Script;
 import fighting.Fighting;
 
 public class DynamicArea {
-	final int MAX_AREA_SIZE = 3;
+	final int MAX_AREA_SIZE = 4;
 	Area overallArea;
 	int overallRadius;
 
@@ -53,7 +53,7 @@ public class DynamicArea {
 	}
 
 	public boolean addExclusiveAreas(List<NPC> spots, List<Area> currentAreas) {
-		if(currentAreas.size() > 100){
+		if(currentAreas.size() > 120){
 			return false;
 		}
 		List<Area> areas = new LinkedList<Area>();

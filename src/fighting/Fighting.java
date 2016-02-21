@@ -137,16 +137,16 @@ public class Fighting {
 			return clickNextMonster();
 		}
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
-		if (!isInArea()) {
-			script.log("Not In area.");
-			if (!walkToArea()) {
-				return false;
-			} else {
-				if (isFighting()) {
-					return false;
-				}
-			}
-		}
+//		if (!isInArea()) {
+//			script.log("Not In area.");
+//			if (!walkToArea()) {
+//				return false;
+//			} else {
+//				if (isFighting()) {
+//					return false;
+//				}
+//			}
+//		}
 		Timer local_timer = new Timer();
 		while (local_timer.timer(30000)) {
 			@SuppressWarnings("unchecked")
