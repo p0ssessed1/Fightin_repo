@@ -136,6 +136,7 @@ public class Fighting {
 		if (script.getMenuAPI().isOpen()) {
 			return clickNextMonster();
 		}
+		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
 		if (!isInArea()) {
 			script.log("Not In area.");
 			if (!walkToArea()) {
@@ -154,7 +155,7 @@ public class Fighting {
 			if (isNpcValid(monster)) {
 				monster.interact(action);
 				t.reset();
-				while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(1000) + 5000)) {
+				while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + 7000)) {
 					Script.sleep(rn.nextInt(400) + 200);
 				}
 				t.reset();
@@ -253,7 +254,7 @@ public class Fighting {
 		boolean animated = false;
 		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack()) {
 			if (script.getMenuAPI().selectAction(action)) {
-				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 1000)) {
+				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 6000)) {
 					Script.sleep(100);
 				}
 				t.reset();
@@ -272,7 +273,7 @@ public class Fighting {
 					rightClicked = getNextMonster();
 					EntityDestination targetDest = new EntityDestination(script.getBot(), rightClicked);
 					script.getMouse().click(targetDest, false);
-					while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 1000)) {
+					while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 6000)) {
 						Script.sleep(100);
 					}
 					t.reset();

@@ -19,7 +19,7 @@ public class DynamicArea {
 
 	public DynamicArea(Fighting fighter) {
 		this.fighter = fighter;
-		overallRadius = Script.random(12, 15);
+		overallRadius = Script.random(8, 12);
 	}
 
 	public List<Area> CreateAreas(List<NPC> spots) {

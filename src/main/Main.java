@@ -94,6 +94,13 @@ public class Main extends Script {
 			if (bank.bank()) {
 				log("Banking Succesful");
 				fighter.reset();
+				if (!fighter.isInArea()) {
+					log("Not In area.");
+					if (!fighter.walkToArea()) {
+						log("Couldn't walk back to area.");
+						stop(true);
+					}
+				}
 			} else {
 				//log("Banking Failed");
 			}
