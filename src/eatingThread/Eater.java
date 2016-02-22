@@ -2,6 +2,7 @@ package eatingThread;
 
 import java.util.Random;
 
+import org.osbot.rs07.api.filter.ActionFilter;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.script.Script;
@@ -44,7 +45,7 @@ public class Eater implements Runnable {
 			} catch (InterruptedException e2) {
 				script.log("Exception in Thread sleep handler." + e2);
 			}
-			if(!script.client.isLoggedIn()){
+			if (!script.client.isLoggedIn()) {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -57,25 +58,18 @@ public class Eater implements Runnable {
 				script.log("Sleep in eater failed. Exception:" + e);
 				e.printStackTrace();
 			}
+			ActionFilter<Item> eat = new ActionFilter<Item>("Eat");
 			if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(HP_BUFFER))) {
-				Item inv = null;
+				Item food = script.getInventory().getItem(eat);
 				try {
-					inv = script.getInventory().getItem(fighter.getFood());
-				} catch (Exception e) {
-					script.log("Inventory not obtained. Trying again.");
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e1) {
-						script.log("Sleeping inside exception handler for checking inv.");
-					}
+					Thread.sleep(rn.nextInt(700) + 600);
+				} catch (InterruptedException e1) {
+					script.log("Sleeping inside exception handler for checking inv.");
 				}
-				if (inv != null && inv.hasAction("Eat")) {
-						inv.interact("Eat");
+				if(food != null){
+					food.interact("Eat");
 				}
-				
 			}
 		}
-
 	}
-
 }

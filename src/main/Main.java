@@ -77,7 +77,7 @@ public class Main extends Script {
 		if(!client.isLoggedIn()){
 			Script.sleep(1000);
 		}
-		sleep(random(750,1000));
+		sleep(random(450,700));
 		if(!threadHandler.isSettup()){
 			threadHandler.settup();
 		}
@@ -97,6 +97,8 @@ public class Main extends Script {
 							failCount = 0;
 						}
 					}
+				} else{
+					fighter.attack();
 				}
 			}
 		}else{

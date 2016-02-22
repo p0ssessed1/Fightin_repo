@@ -114,7 +114,7 @@ public class Banking {
 			if (bankerChosen) {
 				if (banker != null) {
 					banker.interact("Bank");
-				} else{
+				} else {
 					banker = getBanker();
 				}
 			} else {
@@ -128,25 +128,33 @@ public class Banking {
 			t.reset();
 			while (!(isOpen = script.getBank().isOpen()) && t.timer(rn.nextInt(2000) + 1500))
 				;
-			if (isOpen){
+			if (isOpen) {
 				Script.sleep(rn.nextInt(1000) + 250);
 				if (keepItems != null) {
 					if (script.getBank().depositAllExcept(keepItems)) {
 						Script.sleep(rn.nextInt(1000) + 250);
 						if (foodItems != null) {
-							script.getBank().withdrawAll(foodItems);
+							if (script.getBank().contains(foodItems)) {
+								script.getBank().withdrawAll(foodItems);
+								banked = true;
+							}else{
+								script.stop(true);
+							}
 						}
-						banked = true;
 					}
 				} else {
-					if(!script.getInventory().isEmpty()){
+					if (!script.getInventory().isEmpty()) {
 						script.getBank().depositAll();
 					}
-						Script.sleep(rn.nextInt(1000) + 250);
-						if (foodItems != null) {
+					Script.sleep(rn.nextInt(1000) + 250);
+					if (foodItems != null) {
+						if (script.getBank().contains(foodItems)) {
 							script.getBank().withdrawAll(foodItems);
 							banked = true;
+						}else{
+							script.stop(true);
 						}
+					}
 				}
 			}
 			Script.sleep(rn.nextInt(1000) + 250);

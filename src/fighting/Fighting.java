@@ -262,7 +262,7 @@ public class Fighting {
 		}
 		int timeoutVal = script.getSettings().isRunning() ? 7000 : 10000;
 		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack() && script.getMenuAPI().selectAction(action)) {
-			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + timeoutVal)) {
+			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + timeoutVal)) {
 				Script.sleep(100);
 			}
 			t.reset();
@@ -281,7 +281,7 @@ public class Fighting {
 				rightClicked = getNextMonster();
 				EntityDestination targetDest = new EntityDestination(script.getBot(), rightClicked);
 				script.getMouse().click(targetDest, false);
-				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 6000)) {
+				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + timeoutVal)) {
 					Script.sleep(100);
 				}
 				t.reset();

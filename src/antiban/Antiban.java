@@ -335,6 +335,7 @@ public class Antiban implements Runnable {
 			while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 				Thread.sleep(50);
 			}
+			Script.sleep(rn.nextInt(500) + 400);
 		} else if(next != null){
 			script.getCamera().toEntity(next);
 			if (next.isVisible()) {
@@ -357,7 +358,7 @@ public class Antiban implements Runnable {
 		if (state == State.HoverSkill) {
 			return false;
 		}
-		Skill[] skillArray = { Skill.ATTACK, Skill.STRENGTH, Skill.HITPOINTS, Skill.DEFENCE, Skill.PRAYER };
+		Skill[] skillArray = { Skill.ATTACK, Skill.STRENGTH, Skill.HITPOINTS, Skill.PRAYER };
 		Skill skill = skillArray[rn.nextInt(skillArray.length - 1)];
 		if (script.getSkills().hoverSkill(skill)) {
 			Thread.sleep(rn.nextInt(300) + 700);
@@ -385,7 +386,7 @@ public class Antiban implements Runnable {
 			script.getKeyboard().pressKey(keysPressed[randomChoice]);
 			Thread.sleep(rn.nextInt(10) + 10);
 			script.getKeyboard().pressKey(keysPressed[choiceTwo]);
-			Thread.sleep(rn.nextInt(900) + 900);
+			Thread.sleep(rn.nextInt(1300) + 900);
 			script.getKeyboard().releaseKey(keysPressed[firstReleased]);
 			Thread.sleep(rn.nextInt(15)+1);
 			script.getKeyboard().releaseKey(keysPressed[nextReleased]);
