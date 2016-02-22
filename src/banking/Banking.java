@@ -17,17 +17,17 @@ public class Banking {
 	Random rn;
 	Script script;
 	ThreadHandler threadHandler;
-	
+
 	NameFilter<Item> keepItems;
 	NameFilter<Item> foodItems;
 
 	Area bankArea;
 	Timer t = new Timer();
 
-	public void setThreadHandler(ThreadHandler threadHandler){
+	public void setThreadHandler(ThreadHandler threadHandler) {
 		this.threadHandler = threadHandler;
 	}
-	
+
 	public Banking(Script script) {
 		this.script = script;
 		rn = new Random(script.myPlayer().getId());
@@ -96,43 +96,60 @@ public class Banking {
 				return false;
 			}
 		}
-		t.reset();
-		while (t.timer(10000)) {
-			if (Script.random(0, 1) == 0) {
-				NPC banker = getBanker();
-				if (banker != null) {
-					banker.interact("Bank");
-					break;
-				}
-			} else {
-				RS2Object bank = getBankBooth();
-				if (bank != null) {
-					bank.interact("Bank");
-					break;
-				}
-			}
-		}
-		t.reset();
-		while (!(isOpen = script.getBank().isOpen()) && t.timer(rn.nextInt(2000) + 1000))
-			;
-		if (!isOpen) {
-			script.log("Could not open bank.");
-			return false;
-		}
-		Script.sleep(rn.nextInt(1000) + 250);
 		boolean banked = false;
-		if (keepItems != null) {
-			if (script.getBank().depositAllExcept(keepItems)) {
-				Script.sleep(rn.nextInt(1000) + 250);
-				if (foodItems != null) {
-					script.getBank().withdrawAll(foodItems);
-				}
-				banked = true;
+		boolean bankerChosen = false;
+		NPC banker = getBanker();
+		RS2Object bankBooth = getBankBooth();
+		t.reset();
+		if (Script.random(0, 1) == 0) {
+			if (banker != null) {
+				bankerChosen = true;
 			}
 		} else {
-			if (script.getBank().depositAll()) {
-				banked = true;
+			if (bankBooth != null) {
+				bankerChosen = false;
 			}
+		}
+		while (!banked) {
+			if (bankerChosen) {
+				if (banker != null) {
+					banker.interact("Bank");
+				} else{
+					banker = getBanker();
+				}
+			} else {
+				if (bankBooth != null) {
+					bankBooth.interact("Bank");
+				} else {
+					bankBooth = getBankBooth();
+				}
+			}
+			Script.sleep(rn.nextInt(1000) + 250);
+			t.reset();
+			while (!(isOpen = script.getBank().isOpen()) && t.timer(rn.nextInt(2000) + 1500))
+				;
+			if (isOpen){
+				Script.sleep(rn.nextInt(1000) + 250);
+				if (keepItems != null) {
+					if (script.getBank().depositAllExcept(keepItems)) {
+						Script.sleep(rn.nextInt(1000) + 250);
+						if (foodItems != null) {
+							script.getBank().withdrawAll(foodItems);
+						}
+						banked = true;
+					}
+				} else {
+					if(!script.getInventory().isEmpty()){
+						script.getBank().depositAll();
+					}
+						Script.sleep(rn.nextInt(1000) + 250);
+						if (foodItems != null) {
+							script.getBank().withdrawAll(foodItems);
+							banked = true;
+						}
+				}
+			}
+			Script.sleep(rn.nextInt(1000) + 250);
 		}
 
 		return banked;

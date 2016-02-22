@@ -3,6 +3,7 @@ package eatingThread;
 import java.util.Random;
 
 import org.osbot.rs07.api.model.Item;
+import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.script.Script;
 
 import fighting.Fighting;
@@ -16,7 +17,7 @@ public class Eater implements Runnable {
 	Fighting fighter;
 	Timer t = new Timer();
 	int minHP = 10;
-	int HP_BUFFER = 1;
+	int HP_BUFFER = 5;
 	ThreadHandler threadHandler;
 
 	public void setThreadHandler(ThreadHandler threadHandler) {
@@ -30,20 +31,24 @@ public class Eater implements Runnable {
 	}
 
 	public void setHealth(int health) {
+		script.log("Health set to " + health);
 		this.minHP = health;
-		int div = rn.nextInt(5) + 5;
-		this.HP_BUFFER = health / div > 0 ? health / div : 2;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		while (!threadHandler.getThreadKillMessage()) {
+			try {
+				Thread.sleep(rn.nextInt(900) + 600);
+			} catch (InterruptedException e2) {
+				script.log("Exception in Thread sleep handler." + e2);
+			}
 			if(!script.client.isLoggedIn()){
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
-					script.log("Antiban: Exception in Thread sleep handler." + e);
+					script.log("Exception in Thread sleep handler." + e);
 				}
 			}
 			try {
@@ -52,7 +57,7 @@ public class Eater implements Runnable {
 				script.log("Sleep in eater failed. Exception:" + e);
 				e.printStackTrace();
 			}
-			if (script.myPlayer().getCurrentHealth() <= (minHP + rn.nextInt(HP_BUFFER))) {
+			if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(HP_BUFFER))) {
 				Item inv = null;
 				try {
 					inv = script.getInventory().getItem(fighter.getFood());
@@ -65,9 +70,7 @@ public class Eater implements Runnable {
 					}
 				}
 				if (inv != null && inv.hasAction("Eat")) {
-					int div = rn.nextInt(5) + 5;
-					this.HP_BUFFER = minHP / div > 0 ? minHP / div : 2;
-					inv.interact("Eat");
+						inv.interact("Eat");
 				}
 				
 			}

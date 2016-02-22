@@ -50,10 +50,10 @@ public class Antiban implements Runnable {
 	 */
 	public void AntibanHandler() throws InterruptedException {
 		if (fighter.isFighting()) {
-			switch (rn.nextInt(20)) {
+			switch (rn.nextInt(30)) {
 			case 0:
 				script.log("Antiban: Script Sleep Medium Period");
-				Script.sleep(rn.nextInt(500) + 900);
+				Script.sleep(rn.nextInt(900) + 1200);
 			case 1:
 				/* Move Mouse */
 				script.log("Antiban: Move Mouse.");
@@ -80,13 +80,13 @@ public class Antiban implements Runnable {
 				break;
 			case 6:
 				script.log("Antiban: Script Sleep small period");
-				Script.sleep(rn.nextInt(400) + 400);
+				Script.sleep(rn.nextInt(900) + 400);
 				break;
 			case 7:
 				/* Sleep until 1s after done fishing. */
 				script.log("Antiban: Antiban Sleep during combat.");
 				while (fighter.isFighting()) {
-					Thread.sleep(rn.nextInt(100) + 100);
+					Thread.sleep(rn.nextInt(200) + 100);
 				}
 				break;
 			case 8:
@@ -127,20 +127,42 @@ public class Antiban implements Runnable {
 			case 15:
 			case 16:
 			case 17:
-				int[] sideKey = { LEFT_KEY, RIGHT_KEY };
-				int chosenKey = rn.nextInt(100) % 2;
-				int[] keysPressed = { UP_KEY, sideKey[chosenKey] };
-				int firstReleased = rn.nextInt(150) % 2;
-				int nextReleased = (firstReleased + 1) % 2;
-				if (script.getCamera().getYawAngle() < 45) {
-					script.getKeyboard().pressKey(UP_KEY);
-					Thread.sleep(rn.nextInt(10) + 10);
-					script.getKeyboard().pressKey(sideKey[chosenKey]);
-					Thread.sleep(rn.nextInt(500) + 500);
-					script.getKeyboard().releaseKey(keysPressed[firstReleased]);
-					Thread.sleep(rn.nextInt(15)+1);
-					script.getKeyboard().releaseKey(keysPressed[nextReleased]);
+				script.log("AntiBan: Camera Manager.");
+				cameraManager();
+				break;
+			case 18:
+				script.log("AntiBan: Open Magic Tab.");
+				Thread.sleep(rn.nextInt(900) + 300);
+				if (script.getTabs().getOpen() != Tab.MAGIC) {
+					script.getTabs().open(Tab.MAGIC);
 				}
+				Thread.sleep(rn.nextInt(1000) + 900);
+				break;
+			case 19:
+				script.log("AntiBan: Open Friends Tab.");
+				Thread.sleep(rn.nextInt(900) + 300);
+				if (script.getTabs().getOpen() != Tab.FRIENDS) {
+					script.getTabs().open(Tab.FRIENDS);
+				}
+				Thread.sleep(rn.nextInt(1000) + 900);
+				break;
+			case 20:
+				script.log("AntiBan: Open Skills Tab.");
+				Thread.sleep(rn.nextInt(900) + 300);
+				if (script.getTabs().getOpen() != Tab.SKILLS) {
+					script.getTabs().open(Tab.SKILLS);
+				}
+				Thread.sleep(rn.nextInt(1000) + 900);
+				break;
+			case 21:
+				/* Move Mouse */
+				script.log("Antiban: Move Mouse.");
+				moveMouse();
+				break;
+			case 22:
+				/* Move Mouse */
+				script.log("Antiban: Move Mouse.");
+				moveMouse();
 				break;
 			}
 		}
@@ -305,7 +327,7 @@ public class Antiban implements Runnable {
 
 	private boolean rightClickNext() throws InterruptedException {
 		NPC next = fighter.getNextMonster();
-		if (next.isVisible()) {
+		if (next != null && next.isVisible()) {
 			EntityDestination targetDest = new EntityDestination(script.getBot(), next);
 
 			script.getMouse().click(targetDest, true);
@@ -313,7 +335,7 @@ public class Antiban implements Runnable {
 			while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 				Thread.sleep(50);
 			}
-		} else {
+		} else if(next != null){
 			script.getCamera().toEntity(next);
 			if (next.isVisible()) {
 				EntityDestination targetDest = new EntityDestination(script.getBot(), next);
@@ -350,6 +372,25 @@ public class Antiban implements Runnable {
 		}
 		return false;
 	}
+	
+	public void cameraManager() throws InterruptedException{
+		int[] sideKey = { LEFT_KEY, RIGHT_KEY };
+		int chosenKey = rn.nextInt(100) % 2;
+		int[] keysPressed = { UP_KEY, sideKey[chosenKey] };
+		int firstReleased = rn.nextInt(150) % 2;
+		int nextReleased = (firstReleased + 1) % 2;
+		if (script.getCamera().getYawAngle() < 45) {
+			int randomChoice = rn.nextInt()%2;
+			int choiceTwo = (randomChoice + 1) %2;
+			script.getKeyboard().pressKey(keysPressed[randomChoice]);
+			Thread.sleep(rn.nextInt(10) + 10);
+			script.getKeyboard().pressKey(keysPressed[choiceTwo]);
+			Thread.sleep(rn.nextInt(800) + 400);
+			script.getKeyboard().releaseKey(keysPressed[firstReleased]);
+			Thread.sleep(rn.nextInt(15)+1);
+			script.getKeyboard().releaseKey(keysPressed[nextReleased]);
+		}
+	}
 
 	@Override
 	public void run() {
@@ -384,6 +425,5 @@ public class Antiban implements Runnable {
 				script.log("Antiban: Exception in Thread sleep handler." + e);
 			}
 		}
-
 	}
 }

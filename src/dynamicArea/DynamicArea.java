@@ -58,15 +58,19 @@ public class DynamicArea {
 		}
 		List<Area> areas = new LinkedList<Area>();
 		areas = currentAreas;
+		int count = 0;
 		boolean added = false;
 		for (int i = 0; i < spots.size(); i++) {
 			if (fighter.isNpcValid(spots.get(i))) {
 				if (overallArea.contains(spots.get(i))) {
-					fighter.script.log("Added area: " + spots.get(i).getArea(MAX_AREA_SIZE));
 					areas.add(spots.get(i).getArea(MAX_AREA_SIZE));
+					added = true;
+					count++;
 				}
-				added = true;
 			}
+		}
+		if(added){
+			fighter.script.log("Added " + count + " areas");
 		}
 
 		return added;

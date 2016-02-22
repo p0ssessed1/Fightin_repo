@@ -77,7 +77,7 @@ public class Main extends Script {
 		if(!client.isLoggedIn()){
 			Script.sleep(1000);
 		}
-		sleep(random(450,600));
+		sleep(random(750,1000));
 		if(!threadHandler.isSettup()){
 			threadHandler.settup();
 		}
@@ -87,20 +87,29 @@ public class Main extends Script {
 				sleep(100);
 			} else {
 				log("Failed to attack.");
-				if (!fighter.isInArea()) {
-					log("Not In area.");
-					if (!fighter.walkToArea()) {
-						log("Couldn't walk back to area.");
-						failCount++;
-					} else{
-						failCount = 0;
+				if(!fighter.walkToNpcs()){
+					if (!fighter.isInArea()) {
+						log("Not In area.");
+						if (!fighter.walkToArea()) {
+							log("Couldn't walk back to area.");
+							failCount++;
+						} else{
+							failCount = 0;
+						}
 					}
 				}
 			}
 		}else{
-			sleep(random(500,1000));
+			sleep(random(500,700));
 		}
-		
+		if (random(0, 1) == 0) {
+			if(getSettings().getRunEnergy() > random(30,50))
+			{
+				if(!getSettings().isRunning()){
+					getSettings().setRunning(true);
+				}
+			}
+		}
 		
 		if (!fighter.hasFood()) {
 			if (bank.bank()) {
@@ -116,10 +125,14 @@ public class Main extends Script {
 					}
 				}
 			} else {
-				//log("Banking Failed");
+				log("Banking Failed");
 			}
 		}
-
+		
+		if(random(0,2) == 0){
+			antiban.cameraManager();
+		}
+		
 		return 0;
 	}
 

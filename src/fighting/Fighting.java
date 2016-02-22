@@ -109,8 +109,6 @@ public class Fighting {
 	public boolean walkToArea() throws InterruptedException {
 		boolean walked = false;
 		if (!fightingAreas.contains(script.myPlayer())) {
-			script.log("fighting aeas is empty?" + fightingAreas.isEmpty());
-			script.log("closest areas is null? " + (dynamicArea.getClosestArea(fightingAreas) == null));
 			if (!dynamicArea.getClosestArea(fightingAreas).contains(script.myPlayer())) {
 				if (script.getWalking().webWalk(dynamicArea.getClosestArea(fightingAreas))) {
 					Script.sleep(rn.nextInt(100) + 200);
@@ -124,32 +122,28 @@ public class Fighting {
 	}
 
 	/**
-	 * Attemps to fight with a timeout. Walks to nearest fighting area, Looks
-	 * for fight that has been previously set up. Attemps to fight from that
-	 * location.
+	 * Attempts to fight with a timeout. Looks for monster that has been
+	 * previously set up. Attempts to attack.
 	 * 
 	 * @return
 	 * @throws InterruptedException
 	 */
+	@SuppressWarnings("unchecked")
 	public boolean attack() throws InterruptedException {
 		boolean animated = false;
 		if (script.getMenuAPI().isOpen()) {
 			return clickNextMonster();
 		}
+		NPC monster;
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
-		// if (!isInArea()) {
-		// script.log("Not In area.");
-		// if (!walkToArea()) {
-		// return false;
-		// } else {
-		// if (isFighting()) {
-		// return false;
-		// }
-		// }
-		// }
-		@SuppressWarnings("unchecked")
-		NPC monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
-				&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+		if (rn.nextInt(5) < 2) {
+			monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
+					&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+		} else {
+			monster = script.getNpcs().closest(true,
+					n -> actionFilter.match(n) && monsterFilter.match(n) && !(n.isUnderAttack() || n.isAnimating()));
+		}
+
 		if (isNpcValid(monster)) {
 			monster.interact(action);
 			t.reset();
@@ -180,7 +174,7 @@ public class Fighting {
 	 */
 	public boolean isNpcValid(NPC npc) {
 		if (npc != null && script.map.canReach(npc)) {
-			if (actionFilter.match(npc) && monsterFilter.match(npc) && npc.isVisible()) {
+			if (actionFilter.match(npc) && monsterFilter.match(npc)) {
 				int id = npc.getId();
 				if (id != -1) {
 					for (NPC i : script.getNpcs().get(npc.getX(), npc.getY())) {
@@ -240,8 +234,14 @@ public class Fighting {
 	@SuppressWarnings("unchecked")
 	public NPC getNextMonster() {
 		List<NPC> npcs = script.getNpcs().getAll();
-		NPC nearest = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
-				&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+		NPC nearest;
+		if (rn.nextBoolean()) {
+			nearest = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
+					&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+		} else {
+			nearest = script.getNpcs().closest(true,
+					n -> actionFilter.match(n) && monsterFilter.match(n) && !(n.isUnderAttack() || n.isAnimating()));
+		}
 		dynamicArea.addExclusiveAreas(npcs, fightingAreas);
 		rightClicked = nearest;
 		return nearest;
@@ -306,13 +306,26 @@ public class Fighting {
 	public NPC getCurrent() {
 		return current;
 	}
-	
-	public boolean hasFood(){
+
+	public boolean hasFood() {
 		Item[] inv = script.getInventory().getItems();
-		for(Item i: inv){
-			if(i != null && i.hasAction("Eat")){
+		for (Item i : inv) {
+			if (i != null && i.hasAction("Eat")) {
 				return true;
 			}
+		}
+		return false;
+	}
+
+	@SuppressWarnings("unchecked")
+	public boolean walkToNpcs() throws InterruptedException {
+		if (isInArea()) {
+			NPC npc = script.getNpcs().closest(true, n -> monsterFilter.match(n) && !n.isUnderAttack());
+			Area area = npc.getArea(2);
+			script.getWalking().walk(area);
+			return true;
+		} else {
+			walkToArea();
 		}
 		return false;
 	}
