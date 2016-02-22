@@ -230,19 +230,19 @@ public class Antiban implements Runnable {
 				}
 			}
 		} else {
-			if (rn.nextBoolean()) {
-				script.getKeyboard().pressKey(LEFT_KEY);
-			} else {
-				script.getKeyboard().pressKey(RIGHT_KEY);
-			}
-			Thread.sleep(rn.nextInt(100) + rn.nextInt(100) + 1);
 			if (rn.nextInt(100) < rn.nextInt(30) + 70) {
 				script.getKeyboard().pressKey(UP_KEY);
 			} else {
 				script.getKeyboard().pressKey(DOWN_KEY);
 			}
+			Thread.sleep(rn.nextInt(100) + rn.nextInt(100) + 1);
+			if (rn.nextBoolean()) {
+				script.getKeyboard().pressKey(LEFT_KEY);
+			} else {
+				script.getKeyboard().pressKey(RIGHT_KEY);
+			}
 
-			Thread.sleep(rn.nextInt(500) + rn.nextInt(300) + 10);
+			Thread.sleep(rn.nextInt(1000) + rn.nextInt(400) + 900);
 		}
 
 		for (int i = 0; i < 4; i++) {
@@ -385,7 +385,7 @@ public class Antiban implements Runnable {
 			script.getKeyboard().pressKey(keysPressed[randomChoice]);
 			Thread.sleep(rn.nextInt(10) + 10);
 			script.getKeyboard().pressKey(keysPressed[choiceTwo]);
-			Thread.sleep(rn.nextInt(800) + 400);
+			Thread.sleep(rn.nextInt(900) + 900);
 			script.getKeyboard().releaseKey(keysPressed[firstReleased]);
 			Thread.sleep(rn.nextInt(15)+1);
 			script.getKeyboard().releaseKey(keysPressed[nextReleased]);
@@ -420,7 +420,7 @@ public class Antiban implements Runnable {
 				e.printStackTrace();
 			}
 			try {
-				Thread.sleep(rn.nextInt(100) + 200);
+				Thread.sleep(rn.nextInt(1000) + 300);
 			} catch (InterruptedException e) {
 				script.log("Antiban: Exception in Thread sleep handler." + e);
 			}

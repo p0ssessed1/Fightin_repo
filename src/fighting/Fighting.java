@@ -135,6 +135,7 @@ public class Fighting {
 			return clickNextMonster();
 		}
 		NPC monster;
+		int timeoutVal = script.getSettings().isRunning() ? 7000 : 10000;
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
 		if (rn.nextInt(5) < 2) {
 			monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
@@ -147,7 +148,7 @@ public class Fighting {
 		if (isNpcValid(monster)) {
 			monster.interact(action);
 			t.reset();
-			while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + 5000)) {
+			while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + timeoutVal)) {
 				Script.sleep(rn.nextInt(400) + 200);
 			}
 			t.reset();
@@ -156,7 +157,7 @@ public class Fighting {
 			}
 
 			if (animated) {
-				script.log("Arracking: " + monster.getName());
+				script.log("Attacking " + monster.getName());
 				current = monster;
 			} else {
 				current = null;
@@ -249,15 +250,19 @@ public class Fighting {
 
 	public boolean clickNextMonster() throws InterruptedException {
 		boolean animated = false;
-		if (rightClicked == null) {
+		if (rightClicked == null && current == rightClicked) {
 			while (script.getMenuAPI().isOpen()) {
 				Script.sleep(rn.nextInt() % 100);
 				script.getMouse().moveRandomly();
 				Script.sleep(rn.nextInt(500) + 400);
 			}
+			current = null;
+			rightClicked = null;
+			return false;
 		}
+		int timeoutVal = script.getSettings().isRunning() ? 7000 : 10000;
 		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack() && script.getMenuAPI().selectAction(action)) {
-			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + 6000)) {
+			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + timeoutVal)) {
 				Script.sleep(100);
 			}
 			t.reset();
