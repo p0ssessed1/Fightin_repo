@@ -39,46 +39,48 @@ public class Eater implements Runnable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
-		while (!threadHandler.getThreadKillMessage()) {
-			try {
-				Thread.sleep(rn.nextInt(900) + 600);
-			} catch (InterruptedException e2) {
-				script.log("Exception in Thread sleep handler." + e2);
-			}
-			if (!script.client.isLoggedIn()) {
+		synchronized (fighter) {
+			while (!threadHandler.getThreadKillMessage()) {
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(rn.nextInt(900) + 600);
+				} catch (InterruptedException e2) {
+					script.log("Exception in Thread sleep handler." + e2);
+				}
+				if (!script.client.isLoggedIn()) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						script.log("Exception in Thread sleep handler." + e);
+					}
+				}
+				try {
+					Thread.sleep(rn.nextInt(700) + 500);
 				} catch (InterruptedException e) {
-					script.log("Exception in Thread sleep handler." + e);
+					script.log("Sleep in eater failed. Exception:" + e);
+					e.printStackTrace();
 				}
-			}
-			try {
-				Thread.sleep(rn.nextInt(700) + 500);
-			} catch (InterruptedException e) {
-				script.log("Sleep in eater failed. Exception:" + e);
-				e.printStackTrace();
-			}
-			ActionFilter<Item> eat = new ActionFilter<Item>("Eat");
-			if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(HP_BUFFER))) {
-				Item food = script.getInventory().getItem(eat);
-				try {
-					Thread.sleep(rn.nextInt(700) + 600);
-				} catch (InterruptedException e1) {
-					script.log("Sleeping inside exception handler for checking inv.");
-				}
-				if (food != null) {
-					food.interact("Eat");
-					if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
-						if (rn.nextInt(10) < 8) {
-							try {
-								Thread.sleep(rn.nextInt(900) + 900);
-							} catch (InterruptedException e1) {
-								script.log("Sleeping inside exception handler for checking inv.");
-							}
+				ActionFilter<Item> eat = new ActionFilter<Item>("Eat");
+				if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(HP_BUFFER))) {
+					Item food = script.getInventory().getItem(eat);
+					try {
+						Thread.sleep(rn.nextInt(700) + 600);
+					} catch (InterruptedException e1) {
+						script.log("Sleeping inside exception handler for checking inv.");
+					}
+					if (food != null) {
+						food.interact("Eat");
+						if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
+							if (rn.nextInt(10) < 8) {
+								try {
+									Thread.sleep(rn.nextInt(900) + 900);
+								} catch (InterruptedException e1) {
+									script.log("Sleeping inside exception handler for checking inv.");
+								}
 
-							if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER)) &&
-									fighter.getCurrent().getCurrentHealth() > 1) {
-								fighter.getCurrent().interact("Attack");
+								if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER))
+										&& fighter.getCurrent().getCurrentHealth() > 1) {
+									fighter.getCurrent().interact("Attack");
+								}
 							}
 						}
 					}

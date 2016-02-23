@@ -336,7 +336,7 @@ public class Antiban implements Runnable {
 				Thread.sleep(50);
 			}
 			Script.sleep(rn.nextInt(500) + 400);
-		} else if(next != null){
+		} else if (next != null) {
 			script.getCamera().toEntity(next);
 			if (next.isVisible()) {
 				EntityDestination targetDest = new EntityDestination(script.getBot(), next);
@@ -373,57 +373,59 @@ public class Antiban implements Runnable {
 		}
 		return false;
 	}
-	
-	public void cameraManager() throws InterruptedException{
+
+	public void cameraManager() throws InterruptedException {
 		int[] sideKey = { LEFT_KEY, RIGHT_KEY };
 		int chosenKey = rn.nextInt(100) % 2;
 		int[] keysPressed = { UP_KEY, sideKey[chosenKey] };
 		int firstReleased = rn.nextInt(150) % 2;
 		int nextReleased = (firstReleased + 1) % 2;
 		if (script.getCamera().getYawAngle() < 45) {
-			int randomChoice = rn.nextInt(700000)%2;
-			int choiceTwo = (randomChoice + 1) %2;
+			int randomChoice = rn.nextInt(700000) % 2;
+			int choiceTwo = (randomChoice + 1) % 2;
 			script.getKeyboard().pressKey(keysPressed[randomChoice]);
 			Thread.sleep(rn.nextInt(10) + 10);
 			script.getKeyboard().pressKey(keysPressed[choiceTwo]);
 			Thread.sleep(rn.nextInt(1300) + 900);
 			script.getKeyboard().releaseKey(keysPressed[firstReleased]);
-			Thread.sleep(rn.nextInt(15)+1);
+			Thread.sleep(rn.nextInt(15) + 1);
 			script.getKeyboard().releaseKey(keysPressed[nextReleased]);
 		}
 	}
 
 	@Override
 	public void run() {
-		while (!threadHandler.getThreadKillMessage()) {
-			if(!script.client.isLoggedIn()){
+		synchronized (script) {
+			while (!threadHandler.getThreadKillMessage()) {
+				if (!script.client.isLoggedIn()) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						script.log("Antiban: Exception in Thread sleep handler." + e);
+					}
+				}
+				rn = new Random(rnOver.nextInt());
 				try {
-					Thread.sleep(1000);
+					if (fighter.getCurrent() != null && fighter.getCurrent().getHealthPercent() < 25
+							&& state == State.RightClicked) {
+						Thread.sleep(100);
+					} else {
+						AntibanHandler();
+					}
+					if (rn.nextInt(10) == 0) {
+						while (fighter.isFighting()) {
+							Thread.sleep(100);
+						}
+					}
+				} catch (InterruptedException e) {
+					script.log("Antiban: Exception in AntiBan Thread handler." + e);
+					e.printStackTrace();
+				}
+				try {
+					Thread.sleep(rn.nextInt(1000) + 300);
 				} catch (InterruptedException e) {
 					script.log("Antiban: Exception in Thread sleep handler." + e);
 				}
-			}
-			rn = new Random(rnOver.nextInt());
-			try {
-				if (fighter.getCurrent() != null && fighter.getCurrent().getHealthPercent() < 25
-						&& state == State.RightClicked) {
-					Thread.sleep(100);
-				} else {
-					AntibanHandler();
-				}
-				if (rn.nextInt(10) == 0) {
-					while (fighter.isFighting()) {
-						Thread.sleep(100);
-					}
-				}
-			} catch (InterruptedException e) {
-				script.log("Antiban: Exception in AntiBan Thread handler." + e);
-				e.printStackTrace();
-			}
-			try {
-				Thread.sleep(rn.nextInt(1000) + 300);
-			} catch (InterruptedException e) {
-				script.log("Antiban: Exception in Thread sleep handler." + e);
 			}
 		}
 	}
