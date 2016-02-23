@@ -109,7 +109,7 @@ public class Fighting {
 	public boolean walkToArea() throws InterruptedException {
 		boolean walked = false;
 		if (!fightingAreas.contains(script.myPlayer())) {
-			if (!dynamicArea.getClosestArea(fightingAreas).contains(script.myPlayer())) {
+			if (!dynamicArea.getRandomArea(fightingAreas).contains(script.myPlayer())) {
 				if (script.getWalking().webWalk(dynamicArea.getClosestArea(fightingAreas))) {
 					Script.sleep(rn.nextInt(100) + 200);
 					walked = true;
@@ -135,7 +135,7 @@ public class Fighting {
 			return clickNextMonster();
 		}
 		NPC monster;
-		int timeoutVal = script.getSettings().isRunning() ? 7000 : 10000;
+		int timeoutVal = script.getSettings().isRunning() ? 10000 : 15000;
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
 		if (rn.nextInt(5) < 2) {
 			monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
@@ -152,7 +152,7 @@ public class Fighting {
 				Script.sleep(rn.nextInt(400) + 200);
 			}
 			t.reset();
-			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(1500) + 3500)) {
 				Script.sleep(rn.nextInt(400) + 200);
 			}
 

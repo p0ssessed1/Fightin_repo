@@ -2,6 +2,7 @@ package dynamicArea;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
@@ -14,12 +15,14 @@ public class DynamicArea {
 	final int MAX_AREA_SIZE = 3;
 	Area overallArea;
 	int overallRadius;
+	Random rn;
 
 	Fighting fighter;
 
 	public DynamicArea(Fighting fighter) {
 		this.fighter = fighter;
 		overallRadius = Script.random(8, 12);
+		rn = new Random(fighter.script.myPlayer().getId());
 	}
 
 	public List<Area> CreateAreas(List<NPC> spots) {
@@ -74,5 +77,10 @@ public class DynamicArea {
 		}
 
 		return added;
+	}
+	
+	public Area getRandomArea(List<Area> areas){
+		Area area = areas.get(rn.nextInt(areas.size()));
+		return area;
 	}
 }
