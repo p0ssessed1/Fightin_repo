@@ -105,7 +105,7 @@ public class Main extends Script {
 			sleep(random(500,700));
 		}
 		if (random(0, 1) == 0) {
-			if(getSettings().getRunEnergy() > random(30,50))
+			if(getSettings().getRunEnergy() > random(15,40))
 			{
 				if(!getSettings().isRunning()){
 					getSettings().setRunning(true);

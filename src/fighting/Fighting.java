@@ -326,8 +326,10 @@ public class Fighting {
 	public boolean walkToNpcs() throws InterruptedException {
 		if (isInArea()) {
 			NPC npc = script.getNpcs().closest(true, n -> monsterFilter.match(n) && !n.isUnderAttack());
-			Area area = npc.getArea(2);
-			script.getWalking().walk(area);
+			if (npc != null) {
+				Area area = npc.getArea(2);
+				script.getWalking().walk(area);
+			}
 			return true;
 		} else {
 			walkToArea();
