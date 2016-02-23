@@ -16,7 +16,7 @@ import eatingThread.Eater;
 import fighting.Fighting;
 import simpleGui.SimpleGui;
 
-@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.5", version = .5, logo = "")
+@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.6", version = .6, logo = "")
 public class Main extends Script {
 	Banking bank;
 	Fighting fighter;

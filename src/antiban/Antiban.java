@@ -381,7 +381,7 @@ public class Antiban implements Runnable {
 		int firstReleased = rn.nextInt(150) % 2;
 		int nextReleased = (firstReleased + 1) % 2;
 		if (script.getCamera().getYawAngle() < 45) {
-			int randomChoice = rn.nextInt()%2;
+			int randomChoice = rn.nextInt(700000)%2;
 			int choiceTwo = (randomChoice + 1) %2;
 			script.getKeyboard().pressKey(keysPressed[randomChoice]);
 			Thread.sleep(rn.nextInt(10) + 10);
