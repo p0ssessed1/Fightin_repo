@@ -75,7 +75,9 @@ public class Eater implements Runnable {
 							} catch (InterruptedException e1) {
 								script.log("Sleeping inside exception handler for checking inv.");
 							}
-							if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER))) {
+
+							if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER)) &&
+									fighter.getCurrent().getCurrentHealth() > 1) {
 								fighter.getCurrent().interact("Attack");
 							}
 						}
