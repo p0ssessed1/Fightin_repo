@@ -29,6 +29,7 @@ public class Fighting {
 
 	List<Area> fightingAreas = new LinkedList<Area>();
 	NameFilter<NPC> monsterFilter;
+	List<String> monsterNames;
 	ActionFilter<NPC> actionFilter;
 	Timer t = new Timer();
 
@@ -225,6 +226,9 @@ public class Fighting {
 	 */
 	public void setMonsters(String[] fight) {
 		this.monsterFilter = new NameFilter<NPC>(fight);
+		for (String f : fight) {
+			this.monsterNames.add(f);
+		}
 		setAction("Attack");
 	}
 
@@ -342,7 +346,7 @@ public class Fighting {
 		if (script.getMenuAPI().isOpen()) {
 			List<Option> menu = script.getMenuAPI().getMenu();
 			for(Option o: menu){
-				if(o.action == "Attack"){
+				if(o.action == "Attack" && monsterNames.contains(o.name)){
 					return;
 				}
 			}
