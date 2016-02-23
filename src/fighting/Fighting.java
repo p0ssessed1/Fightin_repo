@@ -9,6 +9,7 @@ import org.osbot.rs07.api.filter.NameFilter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.model.NPC;
+import org.osbot.rs07.api.ui.Option;
 import org.osbot.rs07.input.mouse.EntityDestination;
 import org.osbot.rs07.script.Script;
 
@@ -335,5 +336,22 @@ public class Fighting {
 			walkToArea();
 		}
 		return false;
+	}
+
+	public void removeSpuriousRightClicks() throws InterruptedException {
+		if (script.getMenuAPI().isOpen()) {
+			List<Option> menu = script.getMenuAPI().getMenu();
+			for(Option o: menu){
+				if(o.action == "Attack"){
+					return;
+				}
+			}
+			while (script.getMenuAPI().isOpen()) {
+				Script.sleep(rn.nextInt() % 100);
+				script.getMouse().moveRandomly();
+				Script.sleep(rn.nextInt(500) + 400);
+			}
+			rightClicked = null;
+		}
 	}
 }

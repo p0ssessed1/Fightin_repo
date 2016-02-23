@@ -113,6 +113,8 @@ public class Main extends Script {
 			}
 		}
 		
+		fighter.removeSpuriousRightClicks();
+		
 		if (!fighter.hasFood()) {
 			if (bank.bank()) {
 				log("Banking Succesful");
