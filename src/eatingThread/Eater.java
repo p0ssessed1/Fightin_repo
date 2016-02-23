@@ -71,7 +71,7 @@ public class Eater implements Runnable {
 					if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
 						if (rn.nextInt(10) < 8) {
 							try {
-								Thread.sleep(rn.nextInt(900) + 600);
+								Thread.sleep(rn.nextInt(900) + 900);
 							} catch (InterruptedException e1) {
 								script.log("Sleeping inside exception handler for checking inv.");
 							}
