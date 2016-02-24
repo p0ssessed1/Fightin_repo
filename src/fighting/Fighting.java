@@ -119,7 +119,7 @@ public class Fighting {
 			}
 
 		}
-		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
+		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		return walked;
 	}
 
@@ -138,7 +138,7 @@ public class Fighting {
 		}
 		NPC monster;
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 15000;
-		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas);
+		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		if (rn.nextInt(5) < 2) {
 			monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
 					&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
@@ -250,7 +250,7 @@ public class Fighting {
 			nearest = script.getNpcs().closest(true,
 					n -> actionFilter.match(n) && monsterFilter.match(n) && !(n.isUnderAttack() || n.isAnimating()));
 		}
-		dynamicArea.addExclusiveAreas(npcs, fightingAreas);
+		dynamicArea.addExclusiveAreas(npcs, fightingAreas, monsterFilter);
 		rightClicked = nearest;
 		return nearest;
 	}

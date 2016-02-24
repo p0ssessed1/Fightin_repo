@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.NPC;
@@ -55,7 +56,7 @@ public class DynamicArea {
 		return closestArea;
 	}
 
-	public boolean addExclusiveAreas(List<NPC> spots, List<Area> currentAreas) {
+	public boolean addExclusiveAreas(List<NPC> spots, List<Area> currentAreas, Filter<NPC> npcFilter) {
 		if(currentAreas.size() > 120){
 			return false;
 		}
@@ -65,7 +66,7 @@ public class DynamicArea {
 		boolean added = false;
 		for (int i = 0; i < spots.size(); i++) {
 			if (fighter.isNpcValid(spots.get(i))) {
-				if (overallArea.contains(spots.get(i))) {
+				if (overallArea.contains(spots.get(i)) && npcFilter.match(spots.get(i))) {
 					areas.add(spots.get(i).getArea(MAX_AREA_SIZE));
 					added = true;
 					count++;
