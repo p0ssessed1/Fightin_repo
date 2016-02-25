@@ -10,7 +10,6 @@ import org.osbot.rs07.api.map.Area;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.ui.Option;
-import org.osbot.rs07.input.mouse.EntityDestination;
 import org.osbot.rs07.script.Script;
 
 import dynamicArea.DynamicArea;
@@ -255,6 +254,7 @@ public class Fighting {
 		return nearest;
 	}
 
+	@SuppressWarnings("unchecked")
 	public boolean clickNextMonster() throws InterruptedException {
 		boolean animated = false;
 		if (rightClicked == null && current == rightClicked) {
@@ -284,10 +284,10 @@ public class Fighting {
 				current = null;
 			}
 		} else {
-			if (rn.nextInt() % 10 > 5) {
-				rightClicked = getNextMonster();
-				EntityDestination targetDest = new EntityDestination(script.getBot(), rightClicked);
-				script.getMouse().click(targetDest, false);
+			if (rn.nextInt(1000) % 10 > 5) {
+				rightClicked = script.getNpcs().closest(true,
+						n -> actionFilter.match(n) && monsterFilter.match(n) && !(n.isUnderAttack() || n.isAnimating()));
+				rightClicked.interact("Attack");
 				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + timeoutVal)) {
 					Script.sleep(100);
 				}
@@ -359,5 +359,9 @@ public class Fighting {
 			}
 			rightClicked = null;
 		}
+	}
+	
+	public NPC getRightClicked(){
+		return this.rightClicked;
 	}
 }
