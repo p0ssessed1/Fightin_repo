@@ -69,6 +69,11 @@ public class Eater implements Runnable {
 					}
 					if (food != null) {
 						boolean wasMoving = script.myPlayer().isMoving();
+						try {
+							fighter.wait();
+						} catch (InterruptedException e3) {
+							script.log("Exception attempting to wait fighter. " + e3 );
+						}
 						food.interact("Eat");
 						if(wasMoving){
 							try {
@@ -96,6 +101,7 @@ public class Eater implements Runnable {
 								}
 							}
 						}
+						fighter.notify();
 					}
 				}
 			}
