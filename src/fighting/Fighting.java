@@ -354,7 +354,7 @@ public class Fighting {
 	}
 
 	public void removeSpuriousRightClicks() throws InterruptedException {
-		if (script.getMenuAPI().isOpen()) {
+		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack()) {
 			List<Option> menu = script.getMenuAPI().getMenu();
 			for (Option o : menu) {
 				if (o.action.contains("Attack")) {
