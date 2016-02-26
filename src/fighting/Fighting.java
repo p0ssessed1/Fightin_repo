@@ -147,7 +147,7 @@ public class Fighting {
 		}
 
 		if (isNpcValid(monster)) {
-			monster.interact(action);
+			criticalAttack(monster);
 			t.reset();
 			while (!script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + timeoutVal)) {
 				Script.sleep(rn.nextInt(400) + 200);
@@ -168,6 +168,15 @@ public class Fighting {
 		return false;
 	}
 
+	
+	public boolean criticalAttack(NPC monster) throws InterruptedException{
+		while (!threadHandler.ownEatFlag()) {
+			Script.sleep(rn.nextInt(100) + 100);
+		}
+		boolean ret = monster.interact(action);
+		threadHandler.clearEatFlag();
+		return ret;
+	}
 	/**
 	 * Checks if spot is valid as a fighting spot.
 	 * 
@@ -285,9 +294,9 @@ public class Fighting {
 			}
 		} else {
 			if (rn.nextInt(1000) % 10 > 5) {
-				rightClicked = script.getNpcs().closest(true,
-						n -> actionFilter.match(n) && monsterFilter.match(n) && !(n.isUnderAttack() || n.isAnimating()));
-				rightClicked.interact("Attack");
+				rightClicked = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
+						&& !(n.isUnderAttack() || n.isAnimating()));
+				criticalAttack(rightClicked);
 				while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + timeoutVal)) {
 					Script.sleep(100);
 				}
@@ -348,8 +357,12 @@ public class Fighting {
 		if (script.getMenuAPI().isOpen()) {
 			List<Option> menu = script.getMenuAPI().getMenu();
 			for (Option o : menu) {
-				if (o.action == "Attack" && monsterNames.contains(o.name)) {
-					return;
+				if (o.action.contains("Attack")) {
+					for (String s : monsterNames) {
+						if (o.name.contains(s)) {
+							return;
+						}
+					}
 				}
 			}
 			while (script.getMenuAPI().isOpen()) {
@@ -360,8 +373,8 @@ public class Fighting {
 			rightClicked = null;
 		}
 	}
-	
-	public NPC getRightClicked(){
+
+	public NPC getRightClicked() {
 		return this.rightClicked;
 	}
 }

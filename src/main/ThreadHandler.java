@@ -2,6 +2,7 @@ package main;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.osbot.rs07.script.Script;
 
@@ -19,6 +20,7 @@ public class ThreadHandler {
 	
 	boolean settupStatus = false;
 	volatile boolean killThread = false;
+	AtomicBoolean eatFlag = new AtomicBoolean(true);
 
 	public ThreadHandler( Script script, Antiban antiban, Eater eater){
 		this.script = script;
@@ -63,5 +65,13 @@ public class ThreadHandler {
 	
 	public boolean getThreadKillMessage(){
 		return killThread;
+	}
+	
+	public void clearEatFlag(){
+		this.eatFlag.set(true);
+	}
+	
+	public boolean ownEatFlag(){
+		return this.eatFlag.getAndSet(false);
 	}
 }

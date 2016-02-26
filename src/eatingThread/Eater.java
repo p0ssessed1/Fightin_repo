@@ -37,6 +37,38 @@ public class Eater implements Runnable {
 	}
 
 	@SuppressWarnings("unchecked")
+	private boolean tryEat() throws InterruptedException {
+		boolean ret = false;
+		ActionFilter<Item> eat = new ActionFilter<Item>("Eat");
+		Item food = script.getInventory().getItem(eat);
+		Thread.sleep(rn.nextInt(700) + 600);
+		if (food != null) {
+			while (!threadHandler.ownEatFlag()) {
+				Thread.sleep(rn.nextInt(300) + 300);
+			}
+			boolean wasMoving = script.myPlayer().isMoving();
+			ret = food.interact("Eat");
+			if (wasMoving) {
+				Thread.sleep(rn.nextInt(900) + 300);
+				if (fighter.getCurrent() != null && fighter.getCurrent().exists()) {
+					fighter.getCurrent().interact("Attack");
+				} else if (fighter.getRightClicked() != null && fighter.getRightClicked().exists()) {
+					fighter.getRightClicked().interact("Attack");
+				}
+			} else if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
+				if (rn.nextInt(10) < 8) {
+					Thread.sleep(rn.nextInt(900) + 900);
+					if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER))
+							&& fighter.getCurrent().getCurrentHealth() > 1) {
+						fighter.getCurrent().interact("Attack");
+					}
+				}
+			}
+		}
+		threadHandler.clearEatFlag();
+		return ret;
+	}
+
 	@Override
 	public void run() {
 		synchronized (fighter) {
@@ -59,49 +91,12 @@ public class Eater implements Runnable {
 					script.log("Sleep in eater failed. Exception:" + e);
 					e.printStackTrace();
 				}
-				ActionFilter<Item> eat = new ActionFilter<Item>("Eat");
 				if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(HP_BUFFER))) {
-					Item food = script.getInventory().getItem(eat);
 					try {
-						Thread.sleep(rn.nextInt(700) + 600);
-					} catch (InterruptedException e1) {
-						script.log("Sleeping inside exception handler for checking inv.");
-					}
-					if (food != null) {
-						boolean wasMoving = script.myPlayer().isMoving();
-						try {
-							fighter.wait();
-						} catch (InterruptedException e3) {
-							script.log("Exception attempting to wait fighter. " + e3 );
-						}
-						food.interact("Eat");
-						if(wasMoving){
-							try {
-								Thread.sleep(rn.nextInt(900) + 300);
-							} catch (InterruptedException e1) {
-								script.log("Sleeping inside exception handler for checking inv.");
-							}
-							if(fighter.getCurrent() != null && fighter.getCurrent().exists()){
-								fighter.getCurrent().interact("Attack");
-							} else if(fighter.getRightClicked() != null && fighter.getRightClicked().exists()){
-								fighter.getRightClicked().interact("Attack");
-							}
-						}
-						else if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
-							if (rn.nextInt(10) < 8) {
-								try {
-									Thread.sleep(rn.nextInt(900) + 900);
-								} catch (InterruptedException e1) {
-									script.log("Sleeping inside exception handler for checking inv.");
-								}
-
-								if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER))
-										&& fighter.getCurrent().getCurrentHealth() > 1) {
-									fighter.getCurrent().interact("Attack");
-								}
-							}
-						}
-						fighter.notify();
+						tryEat();
+					} catch (InterruptedException e) {
+						script.log("Exception in tryEat. " + e);
+						e.printStackTrace();
 					}
 				}
 			}
