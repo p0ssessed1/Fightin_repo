@@ -133,10 +133,6 @@ public class Main extends Script {
 			}
 		}
 		
-		if(random(0,2) == 0){
-			antiban.cameraManager();
-		}
-		
 		return 0;
 	}
 
