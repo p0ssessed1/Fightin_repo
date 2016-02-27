@@ -89,17 +89,6 @@ public class Fighting {
 	}
 
 	/**
-	 * CODE SNIPPED: Optional<NPC> lobster =
-	 * getNpcs().getAll().stream().filter(o -> o.hasAction("Cage")).min(new
-	 * Comparator<NPC>() {
-	 * 
-	 * @Override public int compare(NPC a, NPC b) { return
-	 *           getMap().distance(a.getPosition()) -
-	 *           getMap().distance(b.getPosition()); } });
-	 *           if(lobster.isPresent()){ lobster.get().interact("Cage"); }
-	 */
-
-	/**
 	 * Walk to the closest fighting area. Uses WebWalk. Gathers new areas to
 	 * walk to based off of monster locations.
 	 * 
@@ -136,7 +125,7 @@ public class Fighting {
 			return clickNextMonster();
 		}
 		NPC monster;
-		int timeoutVal = script.getSettings().isRunning() ? 10000 : 15000;
+		int timeoutVal = script.getSettings().isRunning() ? 10000 : 25000;
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		if (rn.nextInt(5) < 2) {
 			monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
@@ -169,12 +158,12 @@ public class Fighting {
 	}
 
 	
-	public boolean criticalAttack(NPC monster) throws InterruptedException{
-		while (!threadHandler.ownEatFlag()) {
+	private boolean criticalAttack(NPC monster) throws InterruptedException{
+		while (!threadHandler.ownMouse()) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}
 		boolean ret = monster.interact(action);
-		threadHandler.clearEatFlag();
+		threadHandler.releaseMouse();
 		return ret;
 	}
 	/**
@@ -267,22 +256,19 @@ public class Fighting {
 	public boolean clickNextMonster() throws InterruptedException {
 		boolean animated = false;
 		if (rightClicked == null && current == rightClicked) {
-			while (script.getMenuAPI().isOpen()) {
-				Script.sleep(rn.nextInt() % 100);
-				script.getMouse().moveRandomly();
-				Script.sleep(rn.nextInt(500) + 400);
-			}
+			removeMenu();
 			current = null;
 			rightClicked = null;
 			return false;
 		}
-		int timeoutVal = script.getSettings().isRunning() ? 7000 : 10000;
-		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack() && script.getMenuAPI().selectAction(action)) {
+		int timeoutVal = script.getSettings().isRunning() ? 10000 : 20000;
+		if (script.getMenuAPI().isOpen() && rightClicked != null &&
+			!rightClicked.isUnderAttack() && script.getMenuAPI().selectAction(action)) {
 			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + timeoutVal)) {
 				Script.sleep(100);
 			}
 			t.reset();
-			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 5000)) {
 				Script.sleep(rn.nextInt(400) + 200);
 			}
 
@@ -312,11 +298,7 @@ public class Fighting {
 					current = null;
 				}
 			} else {
-				while (script.getMenuAPI().isOpen()) {
-					Script.sleep(rn.nextInt() % 100);
-					script.getMouse().moveRandomly();
-					Script.sleep(rn.nextInt(500) + 400);
-				}
+				removeMenu();
 			}
 		}
 
@@ -353,9 +335,27 @@ public class Fighting {
 		return false;
 	}
 
+	private void removeMenu() throws InterruptedException{
+		while(!threadHandler.ownMouse()){
+			Script.sleep(rn.nextInt(100) + 100);
+		}
+		while (script.getMenuAPI().isOpen()) {
+			Script.sleep(rn.nextInt(100000) % 100);
+			script.getMouse().moveRandomly();
+			threadHandler.releaseMouse();
+			Script.sleep(rn.nextInt(500) + 400);
+		}
+		threadHandler.releaseMouse();
+	}
+	
 	public void removeSpuriousRightClicks() throws InterruptedException {
-		if (script.getMenuAPI().isOpen() && !rightClicked.isUnderAttack()) {
+		if (script.getMenuAPI().isOpen() && rightClicked != null && !rightClicked.isUnderAttack()) {
 			List<Option> menu = script.getMenuAPI().getMenu();
+			if(menu.get(0).name.contains(current.getName())){
+				removeMenu();
+				rightClicked = null;
+				return;
+			}
 			for (Option o : menu) {
 				if (o.action.contains("Attack")) {
 					for (String s : monsterNames) {
@@ -365,16 +365,37 @@ public class Fighting {
 					}
 				}
 			}
-			while (script.getMenuAPI().isOpen()) {
-				Script.sleep(rn.nextInt() % 100);
-				script.getMouse().moveRandomly();
-				Script.sleep(rn.nextInt(500) + 400);
-			}
+			removeMenu();
 			rightClicked = null;
 		}
 	}
 
 	public NPC getRightClicked() {
 		return this.rightClicked;
+	}
+	
+	private NPC searchForAttacker() throws InterruptedException{
+		List<NPC> npcs = script.getNpcs().getAll();
+		for(NPC n: npcs){
+			if(n != null && !n.isUnderAttack()){
+				for(int i = 0; i < 10; i++){
+					Script.sleep(100);
+					if(n.isAnimating()){
+						return n;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	public boolean attackAttacker() throws InterruptedException{
+		NPC attacker;
+		if((attacker = searchForAttacker()) != null){
+			current = attacker;
+			return criticalAttack(attacker);
+		}
+		
+		return false;
 	}
 }

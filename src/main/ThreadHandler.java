@@ -20,7 +20,7 @@ public class ThreadHandler {
 	
 	boolean settupStatus = false;
 	volatile boolean killThread = false;
-	AtomicBoolean eatFlag = new AtomicBoolean(true);
+	AtomicBoolean mouseFlag = new AtomicBoolean(true);
 
 	public ThreadHandler( Script script, Antiban antiban, Eater eater){
 		this.script = script;
@@ -67,11 +67,11 @@ public class ThreadHandler {
 		return killThread;
 	}
 	
-	public void clearEatFlag(){
-		this.eatFlag.set(true);
+	public void releaseMouse(){
+		this.mouseFlag.set(true);
 	}
 	
-	public boolean ownEatFlag(){
-		return this.eatFlag.getAndSet(false);
+	public boolean ownMouse(){
+		return this.mouseFlag.getAndSet(false);
 	}
 }

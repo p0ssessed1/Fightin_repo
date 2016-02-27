@@ -96,7 +96,7 @@ public class Antiban implements Runnable {
 
 					Thread.sleep(rn.nextInt(900) + 300);
 					if (script.getTabs().getOpen() != Tab.INVENTORY) {
-						script.getTabs().open(Tab.INVENTORY);
+						criticalTabOpen(Tab.INVENTORY);
 					}
 				}
 				break;
@@ -134,7 +134,7 @@ public class Antiban implements Runnable {
 				script.log("AntiBan: Open Magic Tab.");
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (script.getTabs().getOpen() != Tab.MAGIC) {
-					script.getTabs().open(Tab.MAGIC);
+					criticalTabOpen(Tab.MAGIC);
 				}
 				Thread.sleep(rn.nextInt(1000) + 900);
 				break;
@@ -142,7 +142,7 @@ public class Antiban implements Runnable {
 				script.log("AntiBan: Open Friends Tab.");
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (script.getTabs().getOpen() != Tab.FRIENDS) {
-					script.getTabs().open(Tab.FRIENDS);
+					criticalTabOpen(Tab.FRIENDS);
 				}
 				Thread.sleep(rn.nextInt(1000) + 900);
 				break;
@@ -150,7 +150,7 @@ public class Antiban implements Runnable {
 				script.log("AntiBan: Open Skills Tab.");
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (script.getTabs().getOpen() != Tab.SKILLS) {
-					script.getTabs().open(Tab.SKILLS);
+					criticalTabOpen(Tab.SKILLS);
 				}
 				Thread.sleep(rn.nextInt(1000) + 900);
 				break;
@@ -166,6 +166,15 @@ public class Antiban implements Runnable {
 				break;
 			}
 		}
+	}
+	
+	private boolean criticalTabOpen(Tab tab) throws InterruptedException{
+		while(!threadHandler.ownMouse()){
+			Thread.sleep(rn.nextInt(100) + 100);
+		}
+		boolean ret = script.getTabs().open(tab);
+		threadHandler.releaseMouse();
+		return ret;
 	}
 
 	private boolean moveCamera() throws InterruptedException {
@@ -263,58 +272,80 @@ public class Antiban implements Runnable {
 		if (state == State.MouseMoved) {
 			return false;
 		}
+		boolean ret = false;
+		while(!threadHandler.ownMouse()){
+			Script.sleep(rn.nextInt(100) + 100);
+		}
 		state = State.MouseMoved;
 		switch (rn.nextInt(10)) {
 		case 0:
 			if (fighter.isFighting()) {
 				if (script.getMouse().moveOutsideScreen()) {
+					threadHandler.releaseMouse();
 					while (fighter.isFighting()) {
 						Thread.sleep(rn.nextInt(100) + 100);
 					}
-					return true;
+					ret = true;
 				}
 			}
+			threadHandler.releaseMouse();
+			break;
 		case 1:
 			script.getMouse().moveRandomly();
+			threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(300) + 1000);
-			return true;
+			ret = true;
+			break;
 		case 2:
 			script.getMouse().moveSlightly();
+			threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 1000);
-			return true;
+			ret = true;
+			break;
 		case 3:
 			script.getMouse().moveVerySlightly();
+			threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 700);
-			return true;
+			ret = true;
+			break;
 		case 4:
 			script.getMouse().moveVerySlightly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveOutsideScreen();
+			threadHandler.releaseMouse();
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
 			}
-			return true;
+			ret = true;
+			break;
 		case 5:
 			script.getMouse().moveSlightly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveRandomly();
+			threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 700);
-			return true;
+			ret = true;
+			break;
 		case 6:
 			script.getMouse().moveRandomly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveSlightly();
+			threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 1100);
-			return true;
+			ret = true;
+			break;
 		case 7:
 			script.getMouse().moveVerySlightly();
+			threadHandler.releaseMouse();
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
 			}
 		case 8:
 			script.getMouse().move(rn.nextInt(20) - 10, rn.nextInt(20) - 10);
+			threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(100) + 100);
-			return true;
+			ret = true;
+			break;
 		}
 
 		if (rn.nextInt(10) == 0) {
@@ -322,7 +353,8 @@ public class Antiban implements Runnable {
 				Thread.sleep(100);
 			}
 		}
-		return false;
+		threadHandler.releaseMouse();
+		return ret;
 	}
 
 	private boolean rightClickNext() throws InterruptedException {
@@ -330,7 +362,11 @@ public class Antiban implements Runnable {
 		if (next != null && next.isVisible()) {
 			EntityDestination targetDest = new EntityDestination(script.getBot(), next);
 
+			while(!threadHandler.ownMouse()){
+				Thread.sleep(rn.nextInt(100) + 100);
+			}
 			script.getMouse().click(targetDest, true);
+			threadHandler.releaseMouse();
 			t.reset();
 			while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 				Thread.sleep(50);
@@ -341,7 +377,11 @@ public class Antiban implements Runnable {
 			if (next.isVisible()) {
 				EntityDestination targetDest = new EntityDestination(script.getBot(), next);
 
+				while(!threadHandler.ownMouse()){
+					Thread.sleep(rn.nextInt(100) + 100);
+				}
 				script.getMouse().click(targetDest, true);
+				threadHandler.releaseMouse();
 				t.reset();
 				while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 					Thread.sleep(50);
@@ -358,20 +398,24 @@ public class Antiban implements Runnable {
 		if (state == State.HoverSkill) {
 			return false;
 		}
+		boolean ret = false;
 		Skill[] skillArray = { Skill.ATTACK, Skill.STRENGTH, Skill.HITPOINTS, Skill.PRAYER };
 		Skill skill = skillArray[rn.nextInt(skillArray.length - 1)];
+		while(!threadHandler.ownMouse()){
+			Thread.sleep(rn.nextInt(100) + 100);
+		}
 		if (script.getSkills().hoverSkill(skill)) {
 			Thread.sleep(rn.nextInt(300) + 700);
 			state = State.HoverSkill;
-			return true;
+			ret = true;
 		}
-
+		threadHandler.releaseMouse();
 		if (rn.nextInt(10) == 0) {
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
 			}
 		}
-		return false;
+		return ret;
 	}
 
 	public void cameraManager() throws InterruptedException {

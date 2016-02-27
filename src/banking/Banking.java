@@ -113,13 +113,13 @@ public class Banking {
 		while (!banked) {
 			if (bankerChosen) {
 				if (banker != null) {
-					banker.interact("Bank");
+					criticalBank(banker);
 				} else {
 					banker = getBanker();
 				}
 			} else {
 				if (bankBooth != null) {
-					bankBooth.interact("Bank");
+					criticalBank(bankBooth);
 				} else {
 					bankBooth = getBankBooth();
 				}
@@ -137,7 +137,7 @@ public class Banking {
 							if (script.getBank().contains(foodItems)) {
 								script.getBank().withdrawAll(foodItems);
 								banked = true;
-							}else{
+							} else {
 								script.stop(true);
 							}
 						}
@@ -151,7 +151,7 @@ public class Banking {
 						if (script.getBank().contains(foodItems)) {
 							script.getBank().withdrawAll(foodItems);
 							banked = true;
-						}else{
+						} else {
 							script.stop(true);
 						}
 					}
@@ -161,5 +161,25 @@ public class Banking {
 		}
 
 		return banked;
+	}
+
+	private boolean criticalBank(RS2Object bankBooth) throws InterruptedException {
+		boolean ret = false;
+		while (!threadHandler.ownMouse()) {
+			Script.sleep(rn.nextInt(101) + 100);
+		}
+		ret = bankBooth.interact("Bank");
+		threadHandler.releaseMouse();
+		return ret;
+	}
+	
+	private boolean criticalBank(NPC banker) throws InterruptedException {
+		boolean ret = false;
+		while (!threadHandler.ownMouse()) {
+			Script.sleep(rn.nextInt(101) + 100);
+		}
+		ret = banker.interact("Bank");
+		threadHandler.releaseMouse();
+		return ret;
 	}
 }

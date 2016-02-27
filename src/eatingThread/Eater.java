@@ -18,7 +18,7 @@ public class Eater implements Runnable {
 	Fighting fighter;
 	Timer t = new Timer();
 	int minHP = 10;
-	int HP_BUFFER = 5;
+	int HP_BUFFER = 7;
 	ThreadHandler threadHandler;
 
 	public void setThreadHandler(ThreadHandler threadHandler) {
@@ -43,7 +43,7 @@ public class Eater implements Runnable {
 		Item food = script.getInventory().getItem(eat);
 		Thread.sleep(rn.nextInt(700) + 600);
 		if (food != null) {
-			while (!threadHandler.ownEatFlag()) {
+			while (!threadHandler.ownMouse()) {
 				Thread.sleep(rn.nextInt(300) + 300);
 			}
 			boolean wasMoving = script.myPlayer().isMoving();
@@ -65,7 +65,7 @@ public class Eater implements Runnable {
 				}
 			}
 		}
-		threadHandler.clearEatFlag();
+		threadHandler.releaseMouse();
 		return ret;
 	}
 

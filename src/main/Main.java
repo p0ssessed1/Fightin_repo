@@ -141,9 +141,16 @@ public class Main extends Script {
 		log("onMessage: " + message.getMessage());
 		if (message.getMessage().contains("Oh dear")) {
 			died();
+		} else if(message.getMessage().contains("already under")){
+			alreadyUnderAttack();
 		}
 	}
 
+	private void alreadyUnderAttack() throws InterruptedException{
+		if(!fighter.attackAttacker()){
+			sleep(random(2000,4000) + 2000);
+		}
+	}
 	private void died() throws InterruptedException {
 		Script.sleep(random(150,500));
 		Item[] inv = getInventory().getItems();
