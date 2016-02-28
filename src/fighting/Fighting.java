@@ -100,6 +100,9 @@ public class Fighting {
 		boolean walked = false;
 		if (!fightingAreas.contains(script.myPlayer())) {
 			if (!dynamicArea.getRandomArea(fightingAreas).contains(script.myPlayer())) {
+				while(!threadHandler.ownMouse()){
+					Script.sleep(rn.nextInt(100) + 100);
+				}
 				if (script.getWalking().webWalk(dynamicArea.getClosestArea(fightingAreas))) {
 					Script.sleep(rn.nextInt(100) + 200);
 					walked = true;
@@ -107,6 +110,7 @@ public class Fighting {
 			}
 
 		}
+		threadHandler.releaseMouse();
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		return walked;
 	}
@@ -325,8 +329,11 @@ public class Fighting {
 		if (isInArea()) {
 			NPC npc = script.getNpcs().closest(true, n -> monsterFilter.match(n) && !n.isUnderAttack());
 			if (npc != null) {
-				Area area = npc.getArea(2);
-				script.getWalking().walk(area);
+				while(!threadHandler.ownMouse()){
+					Script.sleep(rn.nextInt(100) + 100);
+				}
+				script.getWalking().walk(npc.getArea(2));
+				threadHandler.releaseMouse();
 			}
 			return true;
 		} else {

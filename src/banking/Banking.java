@@ -53,11 +53,16 @@ public class Banking {
 		this.foodItems = new NameFilter<Item>(foodItem);
 	}
 
-	public boolean walkToArea() {
-		if (!bankArea.contains(script.myPlayer())) {
-			return script.getWalking().webWalk(bankArea);
+	public boolean walkToArea() throws InterruptedException {
+		boolean ret = false;
+		while(!threadHandler.ownMouse()){
+			Script.sleep(rn.nextInt(100) + 100);
 		}
-		return false;
+		if (!bankArea.contains(script.myPlayer())) {
+			ret = script.getWalking().webWalk(bankArea);
+		}
+		threadHandler.releaseMouse();
+		return ret;
 	}
 
 	private NPC getBanker() {

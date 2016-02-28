@@ -14,6 +14,7 @@ import antiban.Antiban;
 import banking.Banking;
 import eatingThread.Eater;
 import fighting.Fighting;
+import groundItemManager.GroundItemManager;
 import simpleGui.SimpleGui;
 
 @ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.6", version = .6, logo = "")
@@ -22,8 +23,9 @@ public class Main extends Script {
 	Fighting fighter;
 	Antiban antiban;
 	Eater eater;
+	GroundItemManager itemManager;
 	ThreadHandler threadHandler;
-	
+
 	long timeStart;
 	int startStrengthLvl;
 	int startStrengthXp;
@@ -42,18 +44,22 @@ public class Main extends Script {
 		antiban = new Antiban(this, fighter);
 		log("Initialized antiban");
 		eater = new Eater(this, fighter);
-		threadHandler = new ThreadHandler(this, antiban, eater);
+		log("Initialized eating");
+		itemManager = new GroundItemManager(this);
+		log("Initialized ground item manager");
+		threadHandler = new ThreadHandler(this, antiban, eater, itemManager);
 		fighter.setThreadHandler(threadHandler);
 		bank.setThreadHandler(threadHandler);
 		antiban.setThreadHandler(threadHandler);
 		eater.setThreadHandler(threadHandler);
+		itemManager.setThreadHandler(threadHandler);
 
 		getKeyboard().initializeModule();
 		getCamera().initializeModule();
 		getInventory().initializeModule();
 		getCombat().initializeModule();
 		getMouse().initializeModule();
-	
+
 		timeStart = System.currentTimeMillis();
 		startStrengthLvl = getExperienceTracker().getGainedLevels(Skill.STRENGTH);
 		startStrengthXp = getExperienceTracker().getGainedXP(Skill.STRENGTH);
@@ -62,59 +68,63 @@ public class Main extends Script {
 		startHpLvl = getExperienceTracker().getGainedLevels(Skill.HITPOINTS);
 		startHpXp = getExperienceTracker().getGainedXP(Skill.HITPOINTS);
 
-		SimpleGui gui = new SimpleGui(this, this.fighter, this.bank, this.eater);
+		SimpleGui gui = new SimpleGui(this, this.fighter, this.bank, this.eater, this.itemManager);
 		log("Initialized gui");
 		gui.Setup();
 		log("Setup Gui");
 		gui.Display();
 	}
+
 	int failCount = 0;
+
 	@Override
 	public int onLoop() throws InterruptedException {
-		if(failCount > 3){
+		if (failCount > 3) {
 			stop(true);
 		}
-		if(!client.isLoggedIn()){
+		if (!client.isLoggedIn()) {
 			Script.sleep(1000);
 		}
-		sleep(random(450,700));
-		if(!threadHandler.isSettup()){
+		sleep(random(450, 700));
+		if (!threadHandler.isSettup()) {
 			threadHandler.settup();
 		}
 		if (!fighter.isFighting()) {
+			if(random(0,4) == 0){
+				itemManager.pickupItems();
+			}
 			if (fighter.attack()) {
 				log("Attacked.");
 				sleep(100);
 			} else {
 				log("Failed to attack.");
-				if(!fighter.walkToNpcs()){
+				if (!fighter.walkToNpcs()) {
 					if (!fighter.isInArea()) {
 						log("Not In area.");
 						if (!fighter.walkToArea()) {
 							log("Couldn't walk back to area.");
 							failCount++;
-						} else{
+						} else {
 							failCount = 0;
 						}
 					}
-				} else{
+				} else {
 					fighter.attack();
 				}
 			}
-		}else{
-			sleep(random(500,700));
+		} else {
+			sleep(random(500, 700));
 		}
 		if (random(0, 1) == 0) {
-			if(getSettings().getRunEnergy() > random(15,40))
-			{
-				if(!getSettings().isRunning()){
+			if (getSettings().getRunEnergy() > random(15, 40)) {
+				if (!getSettings().isRunning()) {
 					getSettings().setRunning(true);
 				}
 			}
 		}
-		
+
 		fighter.removeSpuriousRightClicks();
-		
+
 		if (!fighter.hasFood()) {
 			if (bank.bank()) {
 				log("Banking Succesful");
@@ -132,7 +142,7 @@ public class Main extends Script {
 				log("Banking Failed");
 			}
 		}
-		
+
 		return 0;
 	}
 
@@ -141,18 +151,19 @@ public class Main extends Script {
 		log("onMessage: " + message.getMessage());
 		if (message.getMessage().contains("Oh dear")) {
 			died();
-		} else if(message.getMessage().contains("already under")){
+		} else if (message.getMessage().contains("already under")) {
 			alreadyUnderAttack();
 		}
 	}
 
-	private void alreadyUnderAttack() throws InterruptedException{
-		if(!fighter.attackAttacker()){
-			sleep(random(2000,4000) + 2000);
+	private void alreadyUnderAttack() throws InterruptedException {
+		if (!fighter.attackAttacker()) {
+			sleep(random(2000, 4000) + 2000);
 		}
 	}
+
 	private void died() throws InterruptedException {
-		Script.sleep(random(150,500));
+		Script.sleep(random(150, 500));
 		Item[] inv = getInventory().getItems();
 		for (Item i : inv) {
 			if (i != null && i.hasAction("Wield")) {
@@ -161,9 +172,9 @@ public class Main extends Script {
 			}
 		}
 		fighter.reset();
-		
+
 	}
-	
+
 	@Override
 	public void onPaint(Graphics2D g) {
 		long timeElapsed = System.currentTimeMillis() - timeStart;

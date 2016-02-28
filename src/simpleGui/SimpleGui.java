@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -28,6 +29,7 @@ import org.osbot.rs07.script.Script;
 import banking.Banking;
 import eatingThread.Eater;
 import fighting.Fighting;
+import groundItemManager.GroundItemManager;
 
 public class SimpleGui implements ActionListener {
 
@@ -42,13 +44,13 @@ public class SimpleGui implements ActionListener {
 	final List<String> BANK_NAMES = new LinkedList<String>(Arrays.asList("Draynor", "East Falador", "West Falador",
 			"East Varrock", "West Varrock", "Lumbridge", "Edgeville"));
 
-	List<String> bank_names_list = new LinkedList<String>();
 	Script script;
 	boolean setUp = false;
 	boolean start = false;
 	Banking bank;
 	Fighting fight;
 	Eater eater;
+	GroundItemManager itemManager;
 
 	JFrame frame = new JFrame("Dynamic Fighter");
 	NameFilter<Item> keepItems;
@@ -57,6 +59,7 @@ public class SimpleGui implements ActionListener {
 	List<JCheckBox> keep = new LinkedList<JCheckBox>();
 	List<JRadioButton> food = new LinkedList<JRadioButton>();
 	JTextField health = new JTextField();
+	JTextField pickupItems = new JTextField();
 	ButtonGroup bg_f = new ButtonGroup();
 	ButtonGroup bg_b = new ButtonGroup();
 	ActionFilter<NPC> f;
@@ -66,11 +69,12 @@ public class SimpleGui implements ActionListener {
 	 */
 	JPanel panel = new JPanel(new GridLayout(0, 1));
 
-	public SimpleGui(Script script, Fighting fighter, Banking bank, Eater eater) {
+	public SimpleGui(Script script, Fighting fighter, Banking bank, Eater eater, GroundItemManager itemManager) {
 		this.script = script;
 		this.fight = fighter;
 		this.bank = bank;
 		this.eater = eater;
+		this.itemManager = itemManager;
 	}
 
 	/**
@@ -87,7 +91,7 @@ public class SimpleGui implements ActionListener {
 		JPanel bankPanel = new JPanel(new GridLayout(0, 3));
 		bankPanel.add(new Label("Banks: "));
 		bankPanel.add(new Label("       "));
-		JPanel foodPanel = new JPanel(new GridLayout(0,2));
+		JPanel foodPanel = new JPanel(new GridLayout(0, 2));
 		foodPanel.add(new Label("Choose Food from inventory:"));
 		JPanel optionPanel = new JPanel(new GridLayout(0, 2));
 		optionPanel.add(new Label("Keep Items:"));
@@ -109,10 +113,10 @@ public class SimpleGui implements ActionListener {
 			}
 		}
 
-		for(JCheckBox b : fightingOptions){
+		for (JCheckBox b : fightingOptions) {
 			fightingPanel.add(b);
 		}
-		
+
 		for (String s : BANK_NAMES) {
 			banks.add(new JRadioButton(s));
 		}
@@ -126,21 +130,21 @@ public class SimpleGui implements ActionListener {
 		List<String> exclusiveInv = new LinkedList<String>();
 		List<Item> exclusiveItemInv = new LinkedList<Item>();
 		for (Item i : inv) {
-			if(i != null){
+			if (i != null) {
 				if (!exclusiveInv.contains(i.getName())) {
 					exclusiveInv.add(i.getName());
 					exclusiveItemInv.add(i);
 				}
 			}
 		}
-		
-		for(Item i : exclusiveItemInv){
-			if(i != null && i.hasAction("Eat")){
+
+		for (Item i : exclusiveItemInv) {
+			if (i != null && i.hasAction("Eat")) {
 				food.add(new JRadioButton(i.getName()));
 			}
 		}
-		
-		for(JRadioButton b: food){
+
+		for (JRadioButton b : food) {
 			bg_f.add(b);
 			foodPanel.add(b);
 		}
@@ -157,7 +161,9 @@ public class SimpleGui implements ActionListener {
 
 		optionPanel.add(new Label("Health to Eat at:"));
 		optionPanel.add(health);
-		
+		optionPanel.add(new Label("Items to pick up (seperate by ;):"));
+		optionPanel.add(pickupItems);
+
 		JButton start = new JButton("Start");
 		start.addActionListener(this);
 		panel.add(fightingPanel, BorderLayout.NORTH);
@@ -189,69 +195,81 @@ public class SimpleGui implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent ae) {
-			List<String> to_keep = new LinkedList<String>();
-			String[] keeping = null;
-			String foodChosen = null;
-			JCheckBox local;
-			for (int i = 0; i < keep.size(); i++) {
-				local = keep.get(i);
-				if (local.isSelected()) {
-					to_keep.add(local.getText());
-				}
+		List<String> to_keep = new LinkedList<String>();
+		String[] keeping = null;
+		String foodChosen = null;
+		JCheckBox local;
+		for (int i = 0; i < keep.size(); i++) {
+			local = keep.get(i);
+			if (local.isSelected()) {
+				to_keep.add(local.getText());
 			}
-			if(!to_keep.isEmpty()){
-				keeping = new String[to_keep.size()];
-				int i = 0;
-				for(String s: to_keep){
-					keeping[i] = s;
-					i++;
-				}
+		}
+		if (!to_keep.isEmpty()) {
+			keeping = new String[to_keep.size()];
+			int i = 0;
+			for (String s : to_keep) {
+				keeping[i] = s;
+				i++;
 			}
-			if(keeping != null){
-				keepItems = new NameFilter<Item>(keeping);
-				bank.setKeepItems(keepItems);
-			}
+		}
+		if (keeping != null) {
+			keepItems = new NameFilter<Item>(keeping);
+			bank.setKeepItems(keepItems);
+		}
 
-			for(JRadioButton b: food){
-				if(b.isSelected()){
-					foodChosen = b.getText();
-				}
+		for (JRadioButton b : food) {
+			if (b.isSelected()) {
+				foodChosen = b.getText();
 			}
-			if(foodChosen != null){
-				bank.setFood(foodChosen);
-				fight.setFood(foodChosen);
+		}
+		if (foodChosen != null) {
+			bank.setFood(foodChosen);
+			fight.setFood(foodChosen);
+		}
+
+		String selectedBank = null;
+		for (JRadioButton b : banks) {
+			if (b.isSelected()) {
+				selectedBank = b.getText();
 			}
-			
-			String selectedBank = null;
-			for (JRadioButton b : banks) {
-				if (b.isSelected()) {
-					selectedBank = b.getText();
-				}
+		}
+		String[] selectedMonsters = new String[fightingOptions.size()];
+		int index = 0;
+		for (JCheckBox f : fightingOptions) {
+			if (f.isSelected()) {
+				selectedMonsters[index] = f.getText();
+				index++;
 			}
-			String[] selectedMonsters = new String[fightingOptions.size()];
-			int index = 0;
-			for (JCheckBox f : fightingOptions) {
-				if (f.isSelected()) {
-					selectedMonsters[index] = f.getText();
-					index++;
-				}
-			}
-			if(selectedBank != null){
-				bank.setArea(BANKS[BANK_NAMES.indexOf(selectedBank)]);
-			}
-			try{
-			if(health != null && Integer.valueOf(health.getText()) != null){
+		}
+		if (selectedBank != null) {
+			bank.setArea(BANKS[BANK_NAMES.indexOf(selectedBank)]);
+		}
+		try {
+			if (health != null && Integer.valueOf(health.getText()) != null) {
 				eater.setHealth(Integer.valueOf(health.getText()));
 			}
-			}catch(Exception e){
-				script.log("Setting health failed. Exception: " + e);
+		} catch (Exception e) {
+			script.log("Setting health failed. Exception: " + e);
+		}
+
+		if (pickupItems.getText() != null) {
+			StringTokenizer st = new StringTokenizer(pickupItems.getText(), ";,.");
+			String[] items = new String[st.countTokens()];
+			int i = 0;
+			while (st.hasMoreTokens()) {
+				items[i] = st.nextToken();
+				i++;
 			}
-			fight.setMonsters(selectedMonsters);
-			script.log("Changing start.");
-			start = true;
-//		} catch (Exception e) {
-//			script.log("Exception in actionPerformed." + e);
-//		}
+			itemManager.setItemFilter(items);
+		}
+
+		fight.setMonsters(selectedMonsters);
+		script.log("Changing start.");
+		start = true;
+		// } catch (Exception e) {
+		// script.log("Exception in actionPerformed." + e);
+		// }
 	}
 
 }

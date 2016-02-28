@@ -8,12 +8,16 @@ import org.osbot.rs07.script.Script;
 
 import antiban.Antiban;
 import eatingThread.Eater;
+import groundItemManager.GroundItemManager;
 
 public class ThreadHandler {
 	Thread antiBanThread;
 	Thread eatingThread;
+	Thread groundItemManagerThread;
+	
 	Antiban antiban;
 	Eater eater;
+	GroundItemManager itemManager;
 	Script script;
 	
 	List<Thread> threadBank = new LinkedList<Thread>();
@@ -22,10 +26,11 @@ public class ThreadHandler {
 	volatile boolean killThread = false;
 	AtomicBoolean mouseFlag = new AtomicBoolean(true);
 
-	public ThreadHandler( Script script, Antiban antiban, Eater eater){
+	public ThreadHandler( Script script, Antiban antiban, Eater eater, GroundItemManager itemManager){
 		this.script = script;
 		this.eater = eater;
 		this.antiban = antiban;
+		this.itemManager = itemManager;
 	}
 	
 	public Thread getEatingThread(){
