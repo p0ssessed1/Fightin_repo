@@ -60,6 +60,8 @@ public class SimpleGui implements ActionListener {
 	List<JRadioButton> food = new LinkedList<JRadioButton>();
 	JTextField health = new JTextField();
 	JTextField pickupItems = new JTextField();
+	JTextField withdrawAmount = new JTextField();
+	JCheckBox prioritizeItems = new JCheckBox();
 	ButtonGroup bg_f = new ButtonGroup();
 	ButtonGroup bg_b = new ButtonGroup();
 	ActionFilter<NPC> f;
@@ -159,10 +161,15 @@ public class SimpleGui implements ActionListener {
 			optionPanel.add(b);
 		}
 
-		optionPanel.add(new Label("Health to Eat at:"));
+		optionPanel.add(new Label("Health to eat at:"));
 		optionPanel.add(health);
 		optionPanel.add(new Label("Items to pick up (seperate by ;):"));
 		optionPanel.add(pickupItems);
+		optionPanel.add(new Label("Always pick up: "));
+		optionPanel.add(prioritizeItems);
+		optionPanel.add(new Label("Food withdraw amount:"));
+		optionPanel.add(withdrawAmount);
+		
 
 		JButton start = new JButton("Start");
 		start.addActionListener(this);
@@ -249,6 +256,10 @@ public class SimpleGui implements ActionListener {
 			if (health != null && Integer.valueOf(health.getText()) != null) {
 				eater.setHealth(Integer.valueOf(health.getText()));
 			}
+			
+			if(withdrawAmount != null && Integer.valueOf(withdrawAmount.getText()) != null){
+				bank.setFoodAmount(Integer.valueOf(withdrawAmount.getText()));
+			}
 		} catch (Exception e) {
 			script.log("Setting health failed. Exception: " + e);
 		}
@@ -263,13 +274,14 @@ public class SimpleGui implements ActionListener {
 			}
 			itemManager.setItemFilter(items);
 		}
+		
+		if(prioritizeItems.isSelected()){
+			itemManager.setPriorityPickup();
+		}
 
 		fight.setMonsters(selectedMonsters);
 		script.log("Changing start.");
 		start = true;
-		// } catch (Exception e) {
-		// script.log("Exception in actionPerformed." + e);
-		// }
 	}
 
 }

@@ -390,6 +390,7 @@ public class Antiban implements Runnable {
 				return false;
 			}
 		}
+		fighter.removeSpuriousRightClicks();
 		state = State.RightClicked;
 		return true;
 	}

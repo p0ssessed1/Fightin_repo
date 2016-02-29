@@ -7,8 +7,12 @@ import java.util.Random;
 import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.filter.NameFilter;
 import org.osbot.rs07.api.model.GroundItem;
+import org.osbot.rs07.api.model.Item;
+import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.script.Script;
 
+import banking.Banking;
+import fighting.Fighting;
 import main.ThreadHandler;
 import main.Timer;
 
@@ -17,15 +21,20 @@ public class GroundItemManager {
 	Random rn;
 	Script script;
 	ThreadHandler threadHandler;
+	Banking banker;
+	Fighting fighter;
 
 	Timer t = new Timer();
 	boolean enabled = false;
+	boolean priorityPickup = false;
 	Filter<GroundItem> itemFilter;
 	List<GroundItem> items;
 	List<GroundItem> filteredItems = new LinkedList<GroundItem>();
 
-	public GroundItemManager(Script script) {
+	public GroundItemManager(Script script, Banking banker, Fighting fighter) {
 		this.script = script;
+		this.banker = banker;
+		this.fighter = fighter;
 		rn = new Random(script.myPlayer().getId());
 	}
 
@@ -35,9 +44,13 @@ public class GroundItemManager {
 
 	public void setItemFilter(String[] items) {
 		itemFilter = new NameFilter<GroundItem>(items);
-		if(items != null && items.length > 0){
+		if (items != null && items.length > 0) {
 			this.enabled = true;
 		}
+	}
+
+	public void setPriorityPickup() {
+		this.priorityPickup = true;
 	}
 
 	public boolean isItems() {
@@ -76,27 +89,58 @@ public class GroundItemManager {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean pickupItems() throws InterruptedException {
+	private boolean eatIfLow() throws InterruptedException {
 		boolean ret = false;
-		if(!enabled){
+		Item food = script.getInventory().getItem(i -> i.hasAction("Eat"));
+		if (food == null) {
+			return false;
+		}
+		if (priorityPickup) {
+			while (!threadHandler.ownMouse()) {
+				Script.sleep(rn.nextInt(100) + 100);
+			}
+			food.interact("Eat");
+			threadHandler.releaseMouse();
+		} else {
+			if (script.getSkills().getDynamic(
+					Skill.HITPOINTS) < (script.getSkills().getStatic(Skill.HITPOINTS) - (8 + rn.nextInt(3)))) {
+				while (!threadHandler.ownMouse()) {
+					Script.sleep(rn.nextInt(100) + 100);
+				}
+				food.interact("Eat");
+				threadHandler.releaseMouse();
+				ret = true;
+			}
+		}
+		return ret;
+	}
+
+	@SuppressWarnings("unchecked")
+	public boolean pickupItems() throws InterruptedException {
+		fighter.clearMonsters();
+		boolean ret = false;
+		if (!enabled) {
 			return ret;
 		}
 		GroundItem item;
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 25000;
 		Script.sleep(rn.nextInt(700) + 850);
-		while((item = script.getGroundItems().closest(true, gi -> itemFilter.match(gi) && isGroundItemValid(gi))) != null){
+		while ((item = script.getGroundItems().closest(true,
+				gi -> itemFilter.match(gi) && isGroundItemValid(gi))) != null) {
 			if (script.getInventory().isFull()) {
-				return ret;
+				if (!eatIfLow()) {
+					return ret;
+				}
 			}
 			if (!item.isVisible() && rn.nextInt(1000) > rn.nextInt(300) + 200) {
 				walkToItem(item);
 			}
 			criticalPickup(item);
-			Script.sleep(rn.nextInt(300) + 350);
+			Script.sleep(rn.nextInt(400) + 550);
 			t.reset();
 			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + timeoutVal)) {
 			}
-			Script.sleep(rn.nextInt(350) + 150);
+			Script.sleep(rn.nextInt(150) + 50);
 		}
 		return ret;
 	}

@@ -20,7 +20,7 @@ public class Banking {
 
 	NameFilter<Item> keepItems;
 	NameFilter<Item> foodItems;
-
+	int foodWithdrawnAmount = 30;
 	Area bankArea;
 	Timer t = new Timer();
 
@@ -51,6 +51,14 @@ public class Banking {
 
 	public void setFood(String foodItem) {
 		this.foodItems = new NameFilter<Item>(foodItem);
+	}
+	
+	public NameFilter<Item> getFood(){
+		return this.foodItems;
+	}
+	
+	public void setFoodAmount(int amount){
+		this.foodWithdrawnAmount = amount;
 	}
 
 	public boolean walkToArea() throws InterruptedException {
@@ -133,6 +141,9 @@ public class Banking {
 			t.reset();
 			while (!(isOpen = script.getBank().isOpen()) && t.timer(rn.nextInt(2000) + 1500))
 				;
+			while(!threadHandler.ownMouse()){
+				Script.sleep(rn.nextInt(100) + 100);
+			}
 			if (isOpen) {
 				Script.sleep(rn.nextInt(1000) + 250);
 				if (keepItems != null) {
@@ -140,7 +151,11 @@ public class Banking {
 						Script.sleep(rn.nextInt(1000) + 250);
 						if (foodItems != null) {
 							if (script.getBank().contains(foodItems)) {
-								script.getBank().withdrawAll(foodItems);
+								if(foodWithdrawnAmount >= 28){
+									script.getBank().withdrawAll(foodItems);
+								} else {
+									script.getBank().withdraw(foodItems, foodWithdrawnAmount);
+								}
 								banked = true;
 							} else {
 								script.stop(true);
@@ -154,7 +169,11 @@ public class Banking {
 					Script.sleep(rn.nextInt(1000) + 250);
 					if (foodItems != null) {
 						if (script.getBank().contains(foodItems)) {
-							script.getBank().withdrawAll(foodItems);
+							if(foodWithdrawnAmount >= 28){
+								script.getBank().withdrawAll(foodItems);
+							} else {
+								script.getBank().withdraw(foodItems, foodWithdrawnAmount);
+							}
 							banked = true;
 						} else {
 							script.stop(true);
@@ -162,6 +181,7 @@ public class Banking {
 					}
 				}
 			}
+			threadHandler.releaseMouse();
 			Script.sleep(rn.nextInt(1000) + 250);
 		}
 

@@ -33,6 +33,8 @@ public class Main extends Script {
 	int startAttackXp;
 	int startHpLvl;
 	int startHpXp;
+	
+	int pickupCount = 0;
 
 	@Override
 	public void onStart() throws InterruptedException {
@@ -45,7 +47,7 @@ public class Main extends Script {
 		log("Initialized antiban");
 		eater = new Eater(this, fighter);
 		log("Initialized eating");
-		itemManager = new GroundItemManager(this);
+		itemManager = new GroundItemManager(this, bank, fighter);
 		log("Initialized ground item manager");
 		threadHandler = new ThreadHandler(this, antiban, eater, itemManager);
 		fighter.setThreadHandler(threadHandler);
@@ -82,16 +84,56 @@ public class Main extends Script {
 		if (failCount > 3) {
 			stop(true);
 		}
-		if (!client.isLoggedIn()) {
+		while (!client.isLoggedIn()) {
 			Script.sleep(1000);
 		}
 		sleep(random(450, 700));
 		if (!threadHandler.isSettup()) {
 			threadHandler.settup();
 		}
+		
+		banking();
+		fighting();
+		fighter.removeSpuriousRightClicks();
+		
+		if (random(0, 1) == 0) {
+			if (getSettings().getRunEnergy() > random(15, 40)) {
+				if (!getSettings().isRunning()) {
+					getSettings().setRunning(true);
+				}
+			}
+		}
+
+		return 0;
+	}
+
+	public void banking() throws InterruptedException{
+		if (!fighter.hasFood()) {
+			if (bank.bank()) {
+				log("Banking Succesful");
+				fighter.reset();
+				if (!fighter.isInArea()) {
+					log("Not In area.");
+					if (!fighter.walkToArea()) {
+						log("Couldn't walk back to area.");
+						failCount++;
+					} else {
+						failCount = 0;
+					}
+				}
+			} else {
+				log("Banking Failed");
+			}
+		}
+	}
+	
+	public void fighting() throws InterruptedException{
 		if (!fighter.isFighting()) {
-			if(random(0,4) == 0){
+			if(random(0,4) == 0 || pickupCount > random(4,7)){
 				itemManager.pickupItems();
+				pickupCount = 0;
+			} else {
+				pickupCount++;
 			}
 			if (fighter.attack()) {
 				log("Attacked.");
@@ -115,37 +157,8 @@ public class Main extends Script {
 		} else {
 			sleep(random(500, 700));
 		}
-		if (random(0, 1) == 0) {
-			if (getSettings().getRunEnergy() > random(15, 40)) {
-				if (!getSettings().isRunning()) {
-					getSettings().setRunning(true);
-				}
-			}
-		}
-
-		fighter.removeSpuriousRightClicks();
-
-		if (!fighter.hasFood()) {
-			if (bank.bank()) {
-				log("Banking Succesful");
-				fighter.reset();
-				if (!fighter.isInArea()) {
-					log("Not In area.");
-					if (!fighter.walkToArea()) {
-						log("Couldn't walk back to area.");
-						failCount++;
-					} else {
-						failCount = 0;
-					}
-				}
-			} else {
-				log("Banking Failed");
-			}
-		}
-
-		return 0;
 	}
-
+	
 	@Override
 	public void onMessage(Message message) throws InterruptedException {
 		log("onMessage: " + message.getMessage());

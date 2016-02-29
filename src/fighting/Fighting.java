@@ -99,11 +99,11 @@ public class Fighting {
 	public boolean walkToArea() throws InterruptedException {
 		boolean walked = false;
 		if (!fightingAreas.contains(script.myPlayer())) {
-			if (!dynamicArea.getRandomArea(fightingAreas).contains(script.myPlayer())) {
+			if (!dynamicArea.getClosestArea(fightingAreas).contains(script.myPlayer())) {
 				while(!threadHandler.ownMouse()){
 					Script.sleep(rn.nextInt(100) + 100);
 				}
-				if (script.getWalking().webWalk(dynamicArea.getClosestArea(fightingAreas))) {
+				if (script.getWalking().webWalk(dynamicArea.getRandomArea(fightingAreas))) {
 					Script.sleep(rn.nextInt(100) + 200);
 					walked = true;
 				}
@@ -312,6 +312,11 @@ public class Fighting {
 
 	public NPC getCurrent() {
 		return current;
+	}
+	
+	public void clearMonsters(){
+		this.current = null;
+		this.rightClicked = null;
 	}
 
 	public boolean hasFood() {
