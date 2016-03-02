@@ -57,9 +57,9 @@ public class Eater implements Runnable {
 				}
 			} else if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
 				if (rn.nextInt(10) < 8) {
-					Thread.sleep(rn.nextInt(900) + 900);
 					if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER))
-							&& fighter.getCurrent().getCurrentHealth() > 1) {
+							&& fighter.getCurrent() != null && fighter.getCurrent().getCurrentHealth() > 1) {
+						Thread.sleep(rn.nextInt(900) + 900);
 						fighter.getCurrent().interact("Attack");
 					}
 				}

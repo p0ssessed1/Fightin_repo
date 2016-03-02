@@ -129,7 +129,9 @@ public class Fighting {
 			return clickNextMonster();
 		}
 		NPC monster;
-		int timeoutVal = script.getSettings().isRunning() ? 10000 : 25000;
+		@SuppressWarnings("unused")
+		boolean notTimedOut = false;
+		int timeoutVal = script.getSettings().isRunning() ? 10000 : 30000;
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		if (rn.nextInt(5) < 2) {
 			monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
@@ -146,10 +148,9 @@ public class Fighting {
 				Script.sleep(rn.nextInt(400) + 200);
 			}
 			t.reset();
-			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(1500) + 3500)) {
+			while (!(animated = script.myPlayer().isAnimating()) && (notTimedOut = t.timer(rn.nextInt(1500) + 3500))) {
 				Script.sleep(rn.nextInt(400) + 200);
 			}
-
 			if (animated) {
 				script.log("Attacking " + monster.getName());
 				current = monster;
@@ -265,14 +266,17 @@ public class Fighting {
 			rightClicked = null;
 			return false;
 		}
-		int timeoutVal = script.getSettings().isRunning() ? 10000 : 20000;
+		@SuppressWarnings("unused")
+		boolean notTimedOut = false;
+		int timeoutVal = script.getSettings().isRunning() ? 10000 : 30000;
 		if (script.getMenuAPI().isOpen() && rightClicked != null &&
 			!rightClicked.isUnderAttack() && script.getMenuAPI().selectAction(action)) {
 			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + timeoutVal)) {
 				Script.sleep(100);
 			}
 			t.reset();
-			while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 5000)) {
+			while (!(animated = script.myPlayer().isAnimating()) &&
+					(notTimedOut = t.timer(rn.nextInt(500) + 5000))) {
 				Script.sleep(rn.nextInt(400) + 200);
 			}
 
@@ -291,7 +295,8 @@ public class Fighting {
 					Script.sleep(100);
 				}
 				t.reset();
-				while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 2500)) {
+				while (!(animated = script.myPlayer().isAnimating()) &&
+						(notTimedOut = t.timer(rn.nextInt(500) + 2500))) {
 					Script.sleep(rn.nextInt(400) + 200);
 				}
 
@@ -305,11 +310,14 @@ public class Fighting {
 				removeMenu();
 			}
 		}
-
 		rightClicked = null;
 		return animated;
 	}
 
+	public DynamicArea getDynamicArea(){
+		return this.dynamicArea;
+	}
+	
 	public NPC getCurrent() {
 		return current;
 	}

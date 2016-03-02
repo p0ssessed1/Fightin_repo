@@ -12,6 +12,7 @@ import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.script.Script;
 
 import banking.Banking;
+import dynamicArea.DynamicArea;
 import fighting.Fighting;
 import main.ThreadHandler;
 import main.Timer;
@@ -23,6 +24,7 @@ public class GroundItemManager {
 	ThreadHandler threadHandler;
 	Banking banker;
 	Fighting fighter;
+	DynamicArea dynamicArea;
 
 	Timer t = new Timer();
 	boolean enabled = false;
@@ -31,10 +33,15 @@ public class GroundItemManager {
 	List<GroundItem> items;
 	List<GroundItem> filteredItems = new LinkedList<GroundItem>();
 
+	public enum pickupRC {
+		RC_OK, RC_NONE, RC_FAIL
+	};
+
 	public GroundItemManager(Script script, Banking banker, Fighting fighter) {
 		this.script = script;
 		this.banker = banker;
 		this.fighter = fighter;
+		this.dynamicArea = fighter.getDynamicArea();
 		rn = new Random(script.myPlayer().getId());
 	}
 
@@ -116,17 +123,18 @@ public class GroundItemManager {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean pickupItems() throws InterruptedException {
+	public pickupRC pickupItems() throws InterruptedException {
 		fighter.clearMonsters();
-		boolean ret = false;
+		pickupRC ret = pickupRC.RC_NONE;
+		boolean animated = false;
 		if (!enabled) {
 			return ret;
 		}
 		GroundItem item;
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 25000;
 		Script.sleep(rn.nextInt(700) + 850);
-		while ((item = script.getGroundItems().closest(true,
-				gi -> itemFilter.match(gi) && isGroundItemValid(gi))) != null) {
+		while ((item = script.getGroundItems().closest(true, gi -> itemFilter.match(gi) && isGroundItemValid(gi)
+				&& dynamicArea.getOverallArea().contains(gi))) != null) {
 			if (script.getInventory().isFull()) {
 				if (!eatIfLow()) {
 					return ret;
@@ -138,8 +146,15 @@ public class GroundItemManager {
 			criticalPickup(item);
 			Script.sleep(rn.nextInt(400) + 550);
 			t.reset();
-			while (script.myPlayer().isMoving() && t.timer(rn.nextInt(2500) + timeoutVal)) {
+			while (!(animated = script.myPlayer().isAnimating()) && script.myPlayer().isMoving()
+					&& t.timer(rn.nextInt(2500) + timeoutVal)) {
 			}
+			if (animated) {
+				/* Means I miss-clicked and am attacking. */
+				Script.sleep(rn.nextInt(1000) + 1000);
+				return pickupRC.RC_FAIL;
+			}
+			ret = pickupRC.RC_OK;
 			Script.sleep(rn.nextInt(150) + 50);
 		}
 		return ret;

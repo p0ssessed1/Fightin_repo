@@ -15,6 +15,7 @@ import banking.Banking;
 import eatingThread.Eater;
 import fighting.Fighting;
 import groundItemManager.GroundItemManager;
+import groundItemManager.GroundItemManager.pickupRC;
 import simpleGui.SimpleGui;
 
 @ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.6", version = .6, logo = "")
@@ -35,7 +36,7 @@ public class Main extends Script {
 	int startHpXp;
 	
 	int pickupCount = 0;
-
+	
 	@Override
 	public void onStart() throws InterruptedException {
 		log("Starting.");
@@ -130,7 +131,9 @@ public class Main extends Script {
 	public void fighting() throws InterruptedException{
 		if (!fighter.isFighting()) {
 			if(random(0,4) == 0 || pickupCount > random(4,7)){
-				itemManager.pickupItems();
+				if(pickupRC.RC_FAIL == itemManager.pickupItems()){
+					return;
+				}
 				pickupCount = 0;
 			} else {
 				pickupCount++;
@@ -170,9 +173,9 @@ public class Main extends Script {
 	}
 
 	private void alreadyUnderAttack() throws InterruptedException {
-		if (!fighter.attackAttacker()) {
+//		if (!fighter.attackAttacker()) {
 			sleep(random(2000, 4000) + 2000);
-		}
+//		}
 	}
 
 	private void died() throws InterruptedException {

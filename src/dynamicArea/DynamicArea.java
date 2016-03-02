@@ -32,6 +32,10 @@ public class DynamicArea {
 		areas.add(fighter.script.myPlayer().getArea(MAX_AREA_SIZE));
 		return areas;
 	}
+	
+	public Area getOverallArea(){
+		return this.overallArea;
+	}
 
 	/**
 	 * Get the closest area in which to fighter that does not contain the
