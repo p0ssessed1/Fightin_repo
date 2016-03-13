@@ -11,6 +11,7 @@ import org.osbot.rs07.script.Script;
 import fighting.Fighting;
 import main.ThreadHandler;
 import main.Timer;
+import overWatch.OverWatch;
 
 public class Antiban implements Runnable {
 	final int UP_KEY = 38;
@@ -18,6 +19,7 @@ public class Antiban implements Runnable {
 	final int DOWN_KEY = 40;
 	final int RIGHT_KEY = 39;
 
+	boolean mouseOwned = false;
 	Random rn;
 	Random rnOver;
 	Script script;
@@ -31,7 +33,12 @@ public class Antiban implements Runnable {
 	State state;
 
 	Timer t = new Timer();
+	OverWatch overWatch;
 
+	public void setOverWatch(OverWatch overWatch){
+		this.overWatch = overWatch;
+	}
+	
 	public void setThreadHandler(ThreadHandler threadHandler) {
 		this.threadHandler = threadHandler;
 	}
@@ -167,13 +174,13 @@ public class Antiban implements Runnable {
 			}
 		}
 	}
-	
-	private boolean criticalTabOpen(Tab tab) throws InterruptedException{
-		while(!threadHandler.ownMouse()){
+
+	private boolean criticalTabOpen(Tab tab) throws InterruptedException {
+		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Thread.sleep(rn.nextInt(100) + 100);
 		}
 		boolean ret = script.getTabs().open(tab);
-		threadHandler.releaseMouse();
+		mouseOwned = threadHandler.releaseMouse();
 		return ret;
 	}
 
@@ -273,7 +280,7 @@ public class Antiban implements Runnable {
 			return false;
 		}
 		boolean ret = false;
-		while(!threadHandler.ownMouse()){
+		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}
 		state = State.MouseMoved;
@@ -281,30 +288,29 @@ public class Antiban implements Runnable {
 		case 0:
 			if (fighter.isFighting()) {
 				if (script.getMouse().moveOutsideScreen()) {
-					threadHandler.releaseMouse();
 					while (fighter.isFighting()) {
 						Thread.sleep(rn.nextInt(100) + 100);
 					}
 					ret = true;
 				}
 			}
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			break;
 		case 1:
 			script.getMouse().moveRandomly();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(300) + 1000);
 			ret = true;
 			break;
 		case 2:
 			script.getMouse().moveSlightly();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 1000);
 			ret = true;
 			break;
 		case 3:
 			script.getMouse().moveVerySlightly();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 700);
 			ret = true;
 			break;
@@ -312,7 +318,7 @@ public class Antiban implements Runnable {
 			script.getMouse().moveVerySlightly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveOutsideScreen();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
 			}
@@ -322,7 +328,7 @@ public class Antiban implements Runnable {
 			script.getMouse().moveSlightly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveRandomly();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 700);
 			ret = true;
 			break;
@@ -330,19 +336,19 @@ public class Antiban implements Runnable {
 			script.getMouse().moveRandomly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveSlightly();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(500) + 1100);
 			ret = true;
 			break;
 		case 7:
 			script.getMouse().moveVerySlightly();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
 			}
 		case 8:
 			script.getMouse().move(rn.nextInt(20) - 10, rn.nextInt(20) - 10);
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			Thread.sleep(rn.nextInt(100) + 100);
 			ret = true;
 			break;
@@ -353,7 +359,7 @@ public class Antiban implements Runnable {
 				Thread.sleep(100);
 			}
 		}
-		threadHandler.releaseMouse();
+		mouseOwned = threadHandler.releaseMouse();
 		return ret;
 	}
 
@@ -362,11 +368,11 @@ public class Antiban implements Runnable {
 		if (next != null && next.isVisible()) {
 			EntityDestination targetDest = new EntityDestination(script.getBot(), next);
 
-			while(!threadHandler.ownMouse()){
+			while (!(mouseOwned = threadHandler.ownMouse())) {
 				Thread.sleep(rn.nextInt(100) + 100);
 			}
 			script.getMouse().click(targetDest, true);
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			t.reset();
 			while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 				Thread.sleep(50);
@@ -377,11 +383,11 @@ public class Antiban implements Runnable {
 			if (next.isVisible()) {
 				EntityDestination targetDest = new EntityDestination(script.getBot(), next);
 
-				while(!threadHandler.ownMouse()){
+				while (!(mouseOwned = threadHandler.ownMouse())) {
 					Thread.sleep(rn.nextInt(100) + 100);
 				}
 				script.getMouse().click(targetDest, true);
-				threadHandler.releaseMouse();
+				mouseOwned = threadHandler.releaseMouse();
 				t.reset();
 				while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 					Thread.sleep(50);
@@ -400,9 +406,9 @@ public class Antiban implements Runnable {
 			return false;
 		}
 		boolean ret = false;
-		Skill[] skillArray = { Skill.ATTACK, Skill.STRENGTH, Skill.HITPOINTS, Skill.PRAYER };
+		Skill[] skillArray = { Skill.STRENGTH, Skill.HITPOINTS, Skill.PRAYER };
 		Skill skill = skillArray[rn.nextInt(skillArray.length - 1)];
-		while(!threadHandler.ownMouse()){
+		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Thread.sleep(rn.nextInt(100) + 100);
 		}
 		if (script.getSkills().hoverSkill(skill)) {
@@ -410,7 +416,7 @@ public class Antiban implements Runnable {
 			state = State.HoverSkill;
 			ret = true;
 		}
-		threadHandler.releaseMouse();
+		mouseOwned = threadHandler.releaseMouse();
 		if (rn.nextInt(10) == 0) {
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
@@ -442,7 +448,7 @@ public class Antiban implements Runnable {
 	public void run() {
 		synchronized (script) {
 			while (!threadHandler.getThreadKillMessage()) {
-				if (!script.client.isLoggedIn()) {
+				while (!script.client.isLoggedIn()) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -463,6 +469,9 @@ public class Antiban implements Runnable {
 						}
 					}
 				} catch (InterruptedException e) {
+					if (mouseOwned) {
+						mouseOwned = threadHandler.releaseMouse();
+					}
 					script.log("Antiban: Exception in AntiBan Thread handler." + e);
 					e.printStackTrace();
 				}

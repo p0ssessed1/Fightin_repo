@@ -93,8 +93,6 @@ public class SimpleGui implements ActionListener {
 		JPanel bankPanel = new JPanel(new GridLayout(0, 3));
 		bankPanel.add(new Label("Banks: "));
 		bankPanel.add(new Label("       "));
-		JPanel foodPanel = new JPanel(new GridLayout(0, 2));
-		foodPanel.add(new Label("Choose Food from inventory:"));
 		JPanel optionPanel = new JPanel(new GridLayout(0, 2));
 		optionPanel.add(new Label("Keep Items:"));
 		for (NPC n : monsters) {
@@ -146,11 +144,6 @@ public class SimpleGui implements ActionListener {
 			}
 		}
 
-		for (JRadioButton b : food) {
-			bg_f.add(b);
-			foodPanel.add(b);
-		}
-
 		for (String i : exclusiveInv) {
 			if (i != null) {
 				keep.add(new JCheckBox(i));
@@ -169,14 +162,17 @@ public class SimpleGui implements ActionListener {
 		optionPanel.add(prioritizeItems);
 		optionPanel.add(new Label("Food withdraw amount:"));
 		optionPanel.add(withdrawAmount);
-		
+		optionPanel.add(new Label("Choose Food from inventory:"));
+		for (JRadioButton b : food) {
+			bg_f.add(b);
+			optionPanel.add(b);
+		}
 
 		JButton start = new JButton("Start");
 		start.addActionListener(this);
 		panel.add(fightingPanel, BorderLayout.NORTH);
 		panel.add(bankPanel);
 		panel.add(optionPanel);
-		panel.add(foodPanel);
 		panel.add(start);
 		frame.add(panel);
 		frame.pack();

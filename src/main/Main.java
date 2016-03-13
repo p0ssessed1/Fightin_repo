@@ -16,9 +16,11 @@ import eatingThread.Eater;
 import fighting.Fighting;
 import groundItemManager.GroundItemManager;
 import groundItemManager.GroundItemManager.pickupRC;
+import overWatch.OverWatch;
+import overWatch.OverWatch.mouseState;
 import simpleGui.SimpleGui;
 
-@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.6", version = .6, logo = "")
+@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.8", version = .8, logo = "")
 public class Main extends Script {
 	Banking bank;
 	Fighting fighter;
@@ -26,6 +28,7 @@ public class Main extends Script {
 	Eater eater;
 	GroundItemManager itemManager;
 	ThreadHandler threadHandler;
+	OverWatch overWatch;
 
 	long timeStart;
 	int startStrengthLvl;
@@ -56,6 +59,15 @@ public class Main extends Script {
 		antiban.setThreadHandler(threadHandler);
 		eater.setThreadHandler(threadHandler);
 		itemManager.setThreadHandler(threadHandler);
+		log("Initialized ThreadHandler");
+		overWatch = new OverWatch(this,fighter,antiban,eater);
+		overWatch.setThreadHandler(threadHandler);
+		overWatch.setState(mouseState.None);
+		
+		eater.setOverWatch(overWatch);
+		fighter.setOverWatch(overWatch);
+		antiban.setOverWatch(overWatch);
+		threadHandler.setOverWatch(overWatch);
 
 		getKeyboard().initializeModule();
 		getCamera().initializeModule();
@@ -86,6 +98,8 @@ public class Main extends Script {
 			stop(true);
 		}
 		while (!client.isLoggedIn()) {
+			log("Logged out. releasing mouse.");
+			threadHandler.releaseMouse();
 			Script.sleep(1000);
 		}
 		sleep(random(450, 700));
@@ -174,7 +188,7 @@ public class Main extends Script {
 
 	private void alreadyUnderAttack() throws InterruptedException {
 //		if (!fighter.attackAttacker()) {
-			sleep(random(2000, 4000) + 2000);
+			Thread.sleep(random(2000, 4000) + 2000);
 //		}
 	}
 

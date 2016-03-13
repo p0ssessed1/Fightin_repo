@@ -14,6 +14,8 @@ import org.osbot.rs07.script.Script;
 
 import dynamicArea.DynamicArea;
 import main.Timer;
+import overWatch.OverWatch;
+import overWatch.OverWatch.mouseState;
 import main.ThreadHandler;
 
 public class Fighting {
@@ -25,7 +27,8 @@ public class Fighting {
 	volatile NPC current;
 	NameFilter<Item> foodItem;
 	ThreadHandler threadHandler;
-
+	boolean mouseOwned = false;
+	
 	List<Area> fightingAreas = new LinkedList<Area>();
 	NameFilter<NPC> monsterFilter;
 	List<String> monsterNames = new LinkedList<String>();
@@ -33,7 +36,12 @@ public class Fighting {
 	Timer t = new Timer();
 
 	NPC rightClicked = null;
+	OverWatch overWatch;
 
+	public void setOverWatch(OverWatch overWatch){
+		this.overWatch = overWatch;
+	}
+	
 	public void reset() {
 		current = null;
 		rightClicked = null;
@@ -100,9 +108,10 @@ public class Fighting {
 		boolean walked = false;
 		if (!fightingAreas.contains(script.myPlayer())) {
 			if (!dynamicArea.getClosestArea(fightingAreas).contains(script.myPlayer())) {
-				while(!threadHandler.ownMouse()){
+				while(!(mouseOwned = threadHandler.ownMouse())){
 					Script.sleep(rn.nextInt(100) + 100);
 				}
+				overWatch.setState(mouseState.Walking);
 				if (script.getWalking().webWalk(dynamicArea.getRandomArea(fightingAreas))) {
 					Script.sleep(rn.nextInt(100) + 200);
 					walked = true;
@@ -110,7 +119,7 @@ public class Fighting {
 			}
 
 		}
-		threadHandler.releaseMouse();
+		mouseOwned = threadHandler.releaseMouse();
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		return walked;
 	}
@@ -164,11 +173,12 @@ public class Fighting {
 
 	
 	private boolean criticalAttack(NPC monster) throws InterruptedException{
-		while (!threadHandler.ownMouse()) {
+		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}
+		overWatch.setState(mouseState.Attacking);
 		boolean ret = monster.interact(action);
-		threadHandler.releaseMouse();
+		mouseOwned = threadHandler.releaseMouse();
 		return ret;
 	}
 	/**
@@ -342,11 +352,12 @@ public class Fighting {
 		if (isInArea()) {
 			NPC npc = script.getNpcs().closest(true, n -> monsterFilter.match(n) && !n.isUnderAttack());
 			if (npc != null) {
-				while(!threadHandler.ownMouse()){
+				while(!(mouseOwned = threadHandler.ownMouse())){
 					Script.sleep(rn.nextInt(100) + 100);
 				}
+				overWatch.setState(mouseState.Walking);
 				script.getWalking().walk(npc.getArea(2));
-				threadHandler.releaseMouse();
+				mouseOwned = threadHandler.releaseMouse();
 			}
 			return true;
 		} else {
@@ -356,16 +367,17 @@ public class Fighting {
 	}
 
 	private void removeMenu() throws InterruptedException{
-		while(!threadHandler.ownMouse()){
+		while(!(mouseOwned = threadHandler.ownMouse())){
 			Script.sleep(rn.nextInt(100) + 100);
 		}
+		overWatch.setState(mouseState.AntiBan);
 		while (script.getMenuAPI().isOpen()) {
 			Script.sleep(rn.nextInt(100000) % 100);
 			script.getMouse().moveRandomly();
-			threadHandler.releaseMouse();
+			mouseOwned = threadHandler.releaseMouse();
 			Script.sleep(rn.nextInt(500) + 400);
 		}
-		threadHandler.releaseMouse();
+		mouseOwned = threadHandler.releaseMouse();
 	}
 	
 	public void removeSpuriousRightClicks() throws InterruptedException {
