@@ -16,6 +16,8 @@ import dynamicArea.DynamicArea;
 import fighting.Fighting;
 import main.ThreadHandler;
 import main.Timer;
+import overWatch.OverWatch;
+import overWatch.OverWatch.mouseState;
 
 public class GroundItemManager {
 
@@ -32,6 +34,7 @@ public class GroundItemManager {
 	Filter<GroundItem> itemFilter;
 	List<GroundItem> items;
 	List<GroundItem> filteredItems = new LinkedList<GroundItem>();
+	OverWatch overWatch;
 
 	public enum pickupRC {
 		RC_OK, RC_NONE, RC_FAIL
@@ -45,6 +48,10 @@ public class GroundItemManager {
 		rn = new Random(script.myPlayer().getId());
 	}
 
+	public void setOverWatch(OverWatch overWatch){
+		this.overWatch = overWatch;
+	}
+	
 	public void setThreadHandler(ThreadHandler threadHandler) {
 		this.threadHandler = threadHandler;
 	}
@@ -70,6 +77,7 @@ public class GroundItemManager {
 			while (!threadHandler.ownMouse()) {
 				Script.sleep(rn.nextInt(100) + 100);
 			}
+			overWatch.setState(mouseState.Walking);
 			script.getWalking().walk(gi.getArea(2));
 			threadHandler.releaseMouse();
 			Script.sleep(rn.nextInt(300) + 350);
@@ -106,6 +114,7 @@ public class GroundItemManager {
 			while (!threadHandler.ownMouse()) {
 				Script.sleep(rn.nextInt(100) + 100);
 			}
+			overWatch.setState(mouseState.Eating);
 			food.interact("Eat");
 			threadHandler.releaseMouse();
 		} else {
@@ -114,6 +123,7 @@ public class GroundItemManager {
 				while (!threadHandler.ownMouse()) {
 					Script.sleep(rn.nextInt(100) + 100);
 				}
+				overWatch.setState(mouseState.Eating);
 				food.interact("Eat");
 				threadHandler.releaseMouse();
 				ret = true;
@@ -164,6 +174,7 @@ public class GroundItemManager {
 		while (!threadHandler.ownMouse()) {
 			Thread.sleep(rn.nextInt(100) + 100);
 		}
+		overWatch.setState(mouseState.PickingUp);
 		boolean ret = item.interact("Take");
 		threadHandler.releaseMouse();
 		return ret;

@@ -16,6 +16,8 @@ public class ThreadHandler {
 	Thread antiBanThread;
 	Thread eatingThread;
 	Thread groundItemManagerThread;
+	Thread overWatchThread;
+
 	long timestamp = 0;
 	long TIMEOUT_TIME_MS = 0;
 	Antiban antiban;
@@ -58,16 +60,20 @@ public class ThreadHandler {
 		threadBank.add(antiBanThread);
 		antiBanThread.setPriority(Thread.MIN_PRIORITY);
 		script.log("Created new Antiban thread.");
-		antiBanThread.setDaemon(true);
 		antiBanThread.start();
 		script.log("Started new Antiban thread.");
 		
 		eatingThread = new Thread(eater);
 		threadBank.add(eatingThread);
 		eatingThread.setPriority(Thread.MIN_PRIORITY);
-		eatingThread.setDaemon(true);
 		eatingThread.start();
 		script.log("Started new Eating thread.");
+		
+		overWatchThread = new Thread(overWatch);
+		threadBank.add(overWatchThread);
+		overWatchThread.setPriority(Thread.NORM_PRIORITY);
+		overWatchThread.start();
+		script.log("Started new OverWatch thread.");
 		
 		settupStatus = true;
 	}
@@ -85,6 +91,7 @@ public class ThreadHandler {
 	}
 	
 	public boolean releaseMouse(){
+		overWatch.resetState();
 		this.mouseFlag.set(true);
 		return false;
 	}

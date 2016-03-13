@@ -68,6 +68,7 @@ public class Main extends Script {
 		fighter.setOverWatch(overWatch);
 		antiban.setOverWatch(overWatch);
 		threadHandler.setOverWatch(overWatch);
+		itemManager.setOverWatch(overWatch);
 
 		getKeyboard().initializeModule();
 		getCamera().initializeModule();
@@ -98,8 +99,6 @@ public class Main extends Script {
 			stop(true);
 		}
 		while (!client.isLoggedIn()) {
-			log("Logged out. releasing mouse.");
-			threadHandler.releaseMouse();
 			Script.sleep(1000);
 		}
 		sleep(random(450, 700));
