@@ -9,6 +9,7 @@ import org.osbot.rs07.input.mouse.EntityDestination;
 import org.osbot.rs07.script.Script;
 
 import fighting.Fighting;
+import groundItemManager.GroundItemManager;
 import main.ThreadHandler;
 import main.Timer;
 import overWatch.OverWatch;
@@ -19,8 +20,9 @@ public class Antiban implements Runnable {
 	final int LEFT_KEY = 37;
 	final int DOWN_KEY = 40;
 	final int RIGHT_KEY = 39;
+	final String threadName = "AntiBan";
 
-	boolean mouseOwned = false;
+	volatile boolean mouseOwned = false;
 	Random rn;
 	Random rnOver;
 	Script script;
@@ -35,7 +37,12 @@ public class Antiban implements Runnable {
 
 	Timer t = new Timer();
 	OverWatch overWatch;
+	GroundItemManager itemManager;
 
+	
+	public void setItemManager(GroundItemManager itemManager){
+		this.itemManager = itemManager;
+	}
 	public void setOverWatch(OverWatch overWatch){
 		this.overWatch = overWatch;
 	}
@@ -63,6 +70,7 @@ public class Antiban implements Runnable {
 				Script.sleep(rn.nextInt(900) + 1200);
 			case 1:
 				/* Move Mouse */
+				threadHandler.logPrint(threadName, "Antiban: Move Mouse.");
 				script.log("Antiban: Move Mouse.");
 				moveMouse();
 				break;
@@ -72,6 +80,7 @@ public class Antiban implements Runnable {
 				break;
 			case 3:
 				/* Right Click Hover */
+				threadHandler.logPrint(threadName, "Antiban: Right Click.");
 				script.log("Antiban: Right Click.");
 				rightClickNext();
 				break;
@@ -93,6 +102,7 @@ public class Antiban implements Runnable {
 				break;
 			case 8:
 				/* Hover Skill. */
+				threadHandler.logPrint(threadName,"Antiban: Check XP return to inventory.");
 				script.log("Antiban: Check XP return to inventory.");
 				if (hoverSkill()) {
 
@@ -103,6 +113,7 @@ public class Antiban implements Runnable {
 				}
 				break;
 			case 9:
+				threadHandler.logPrint(threadName,"Antiban: Check XP & move mouse.");
 				script.log("Antiban: Check XP & move mouse.");
 				if (hoverSkill()) {
 					Thread.sleep(rn.nextInt(900) + 500);
@@ -111,12 +122,14 @@ public class Antiban implements Runnable {
 				break;
 			case 10:
 				/* Right Click Hover */
+				threadHandler.logPrint(threadName,"Antiban: Right Click medium sleep.");
 				script.log("Antiban: Right Click medium sleep.");
 				rightClickNext();
 				Script.sleep(rn.nextInt(500) + 900);
 				break;
 			case 11:
 				/* Right Click Hover */
+				threadHandler.logPrint(threadName,"Antiban: Right Click until done fighting.");
 				script.log("Antiban: Right Click until done fighting.");
 				rightClickNext();
 				while (fighter.isFighting()) {
@@ -132,6 +145,7 @@ public class Antiban implements Runnable {
 				cameraManager();
 				break;
 			case 18:
+				threadHandler.logPrint(threadName,"AntiBan: Open Magic Tab.");
 				script.log("AntiBan: Open Magic Tab.");
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (script.getTabs().getOpen() != Tab.MAGIC) {
@@ -140,6 +154,7 @@ public class Antiban implements Runnable {
 				Thread.sleep(rn.nextInt(1000) + 900);
 				break;
 			case 19:
+				threadHandler.logPrint(threadName,"AntiBan: Open Friends Tab.");
 				script.log("AntiBan: Open Friends Tab.");
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (script.getTabs().getOpen() != Tab.FRIENDS) {
@@ -148,6 +163,7 @@ public class Antiban implements Runnable {
 				Thread.sleep(rn.nextInt(1000) + 900);
 				break;
 			case 20:
+				threadHandler.logPrint(threadName,"AntiBan: Open Skills Tab.");
 				script.log("AntiBan: Open Skills Tab.");
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (script.getTabs().getOpen() != Tab.SKILLS) {
@@ -157,11 +173,13 @@ public class Antiban implements Runnable {
 				break;
 			case 21:
 				/* Move Mouse */
+				threadHandler.logPrint(threadName,"Antiban: Move Mouse.");
 				script.log("Antiban: Move Mouse.");
 				moveMouse();
 				break;
 			case 22:
 				/* Move Mouse */
+				threadHandler.logPrint(threadName,"Antiban: Move Mouse.");
 				script.log("Antiban: Move Mouse.");
 				moveMouse();
 				break;
@@ -175,7 +193,7 @@ public class Antiban implements Runnable {
 		}
 		overWatch.setState(mouseState.AntiBan);
 		boolean ret = script.getTabs().open(tab);
-		mouseOwned = threadHandler.releaseMouse();
+		releaseMouseOwned();
 		return ret;
 	}
 
@@ -263,7 +281,17 @@ public class Antiban implements Runnable {
 		state = State.CameraMoved;
 		return true;
 	}
-
+	
+	public void resetMouseOwned(){
+		this.mouseOwned = false;
+	}
+	
+	private void releaseMouseOwned(){
+		if(mouseOwned){
+			threadHandler.releaseMouse();
+		}
+	}
+	
 	/**
 	 * Move mouse off the screen until player is no longer fishing.
 	 * 
@@ -284,29 +312,33 @@ public class Antiban implements Runnable {
 		case 0:
 			if (fighter.isFighting()) {
 				if (script.getMouse().moveOutsideScreen()) {
+					releaseMouseOwned();
 					while (fighter.isFighting()) {
 						Thread.sleep(rn.nextInt(100) + 100);
 					}
 					ret = true;
+				} else {
+					releaseMouseOwned();
 				}
+			} else {
+				releaseMouseOwned();
 			}
-			mouseOwned = threadHandler.releaseMouse();
 			break;
 		case 1:
 			script.getMouse().moveRandomly();
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			Thread.sleep(rn.nextInt(300) + 1000);
 			ret = true;
 			break;
 		case 2:
 			script.getMouse().moveSlightly();
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			Thread.sleep(rn.nextInt(500) + 1000);
 			ret = true;
 			break;
 		case 3:
 			script.getMouse().moveVerySlightly();
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			Thread.sleep(rn.nextInt(500) + 700);
 			ret = true;
 			break;
@@ -314,7 +346,7 @@ public class Antiban implements Runnable {
 			script.getMouse().moveVerySlightly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveOutsideScreen();
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
 			}
@@ -324,7 +356,7 @@ public class Antiban implements Runnable {
 			script.getMouse().moveSlightly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveRandomly();
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			Thread.sleep(rn.nextInt(500) + 700);
 			ret = true;
 			break;
@@ -332,19 +364,19 @@ public class Antiban implements Runnable {
 			script.getMouse().moveRandomly();
 			Thread.sleep(rn.nextInt(100) + 100);
 			script.getMouse().moveSlightly();
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			Thread.sleep(rn.nextInt(500) + 1100);
 			ret = true;
 			break;
 		case 7:
 			script.getMouse().moveVerySlightly();
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
 			}
 		case 8:
 			script.getMouse().move(rn.nextInt(20) - 10, rn.nextInt(20) - 10);
-			mouseOwned = threadHandler.releaseMouse();
+			releaseMouseOwned();
 			Thread.sleep(rn.nextInt(100) + 100);
 			ret = true;
 			break;
@@ -355,43 +387,51 @@ public class Antiban implements Runnable {
 				Thread.sleep(100);
 			}
 		}
-		mouseOwned = threadHandler.releaseMouse();
+		if(mouseOwned){
+			releaseMouseOwned();
+		}
 		return ret;
 	}
 
 	private boolean rightClickNext() throws InterruptedException {
-		NPC next = fighter.getNextMonster();
-		if (next != null && next.isVisible()) {
-			EntityDestination targetDest = new EntityDestination(script.getBot(), next);
-
-			while (!(mouseOwned = threadHandler.ownMouse())) {
-				Thread.sleep(rn.nextInt(100) + 100);
-			}
-			overWatch.setState(mouseState.AntiBan);
-			script.getMouse().click(targetDest, true);
-			mouseOwned = threadHandler.releaseMouse();
-			t.reset();
-			while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
-				Thread.sleep(50);
-			}
-			Script.sleep(rn.nextInt(500) + 400);
-		} else if (next != null) {
-			script.getCamera().toEntity(next);
-			if (next.isVisible()) {
+		if(itemManager.priorityPickup){
+			threadHandler.logPrint(threadName, "Priority pickup enabled, returning.");
+			return false;
+		}
+		if(!script.getMenuAPI().isOpen()){
+			NPC next = fighter.getNextMonster();
+			if (next != null && next.isVisible()) {
 				EntityDestination targetDest = new EntityDestination(script.getBot(), next);
-
+	
 				while (!(mouseOwned = threadHandler.ownMouse())) {
 					Thread.sleep(rn.nextInt(100) + 100);
 				}
 				overWatch.setState(mouseState.AntiBan);
 				script.getMouse().click(targetDest, true);
-				mouseOwned = threadHandler.releaseMouse();
+				releaseMouseOwned();
 				t.reset();
 				while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 					Thread.sleep(50);
 				}
-			} else {
-				return false;
+				Script.sleep(rn.nextInt(500) + 400);
+			} else if (next != null) {
+				script.getCamera().toEntity(next);
+				if (next.isVisible()) {
+					EntityDestination targetDest = new EntityDestination(script.getBot(), next);
+	
+					while (!(mouseOwned = threadHandler.ownMouse())) {
+						Thread.sleep(rn.nextInt(100) + 100);
+					}
+					overWatch.setState(mouseState.AntiBan);
+					script.getMouse().click(targetDest, true);
+					releaseMouseOwned();
+					t.reset();
+					while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
+						Thread.sleep(50);
+					}
+				} else {
+					return false;
+				}
 			}
 		}
 		fighter.removeSpuriousRightClicks();
@@ -415,7 +455,7 @@ public class Antiban implements Runnable {
 			state = State.HoverSkill;
 			ret = true;
 		}
-		mouseOwned = threadHandler.releaseMouse();
+		releaseMouseOwned();
 		if (rn.nextInt(10) == 0) {
 			while (fighter.isFighting()) {
 				Thread.sleep(100);
@@ -450,8 +490,11 @@ public class Antiban implements Runnable {
 				while (!script.client.isLoggedIn()) {
 					try {
 						Thread.sleep(1000);
-					} catch (InterruptedException e) {
+					} catch (Exception e) {
+						threadHandler.logPrint(threadName,"Antiban: Exception in Thread sleep handler." + e);
 						script.log("Antiban: Exception in Thread sleep handler." + e);
+						e.printStackTrace();
+						threadHandler.exceptionPrint(threadName, e);
 					}
 				}
 				rn = new Random(rnOver.nextInt());
@@ -467,17 +510,20 @@ public class Antiban implements Runnable {
 							Thread.sleep(100);
 						}
 					}
-				} catch (InterruptedException e) {
-					if (mouseOwned) {
-						mouseOwned = threadHandler.releaseMouse();
-					}
+				} catch (Exception e) {
+					releaseMouseOwned();
+					threadHandler.logPrint(threadName,"Antiban: Exception in AntiBan Thread handler." + e);
 					script.log("Antiban: Exception in AntiBan Thread handler." + e);
 					e.printStackTrace();
+					threadHandler.exceptionPrint(threadName, e);
 				}
 				try {
 					Thread.sleep(rn.nextInt(1000) + 300);
-				} catch (InterruptedException e) {
+				} catch (Exception e) {
+					threadHandler.logPrint(threadName,"Antiban: Exception in Thread sleep handler." + e);
 					script.log("Antiban: Exception in Thread sleep handler." + e);
+					e.printStackTrace();
+					threadHandler.exceptionPrint(threadName, e);
 				}
 			}
 		}

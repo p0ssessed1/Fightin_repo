@@ -30,11 +30,12 @@ public class GroundItemManager {
 
 	Timer t = new Timer();
 	boolean enabled = false;
-	boolean priorityPickup = false;
+	public boolean priorityPickup = false;
 	Filter<GroundItem> itemFilter;
 	List<GroundItem> items;
 	List<GroundItem> filteredItems = new LinkedList<GroundItem>();
 	OverWatch overWatch;
+	volatile boolean mouseOwned;
 
 	public enum pickupRC {
 		RC_OK, RC_NONE, RC_FAIL
@@ -134,7 +135,7 @@ public class GroundItemManager {
 
 	@SuppressWarnings("unchecked")
 	public pickupRC pickupItems() throws InterruptedException {
-		fighter.clearMonsters();
+		fighter.reset();
 		pickupRC ret = pickupRC.RC_NONE;
 		boolean animated = false;
 		if (!enabled) {
@@ -170,13 +171,23 @@ public class GroundItemManager {
 		return ret;
 	}
 
+	private void releaseMouseOwned(){
+		if(mouseOwned){
+			mouseOwned = threadHandler.releaseMouse();
+		}
+	}
+	
+	public void resetMouseOwned(){
+		this.mouseOwned = false;
+	}
+	
 	private boolean criticalPickup(GroundItem item) throws InterruptedException {
-		while (!threadHandler.ownMouse()) {
+		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Thread.sleep(rn.nextInt(100) + 100);
 		}
 		overWatch.setState(mouseState.PickingUp);
 		boolean ret = item.interact("Take");
-		threadHandler.releaseMouse();
+		releaseMouseOwned();
 		return ret;
 	}
 }

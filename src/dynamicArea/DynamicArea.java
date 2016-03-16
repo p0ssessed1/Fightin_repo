@@ -13,7 +13,7 @@ import org.osbot.rs07.script.Script;
 import fighting.Fighting;
 
 public class DynamicArea {
-	final int MAX_AREA_SIZE = 3;
+	final int MAX_AREA_SIZE = 2;
 	Area overallArea;
 	int overallRadius;
 	Random rn;
@@ -22,7 +22,7 @@ public class DynamicArea {
 
 	public DynamicArea(Fighting fighter) {
 		this.fighter = fighter;
-		overallRadius = Script.random(8, 12);
+		overallRadius = Script.random(8, 11);
 		rn = new Random(fighter.script.myPlayer().getId());
 	}
 

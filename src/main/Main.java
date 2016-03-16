@@ -3,6 +3,7 @@ package main;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.io.IOException;
 
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.ui.Message;
@@ -29,6 +30,8 @@ public class Main extends Script {
 	GroundItemManager itemManager;
 	ThreadHandler threadHandler;
 	OverWatch overWatch;
+	
+	final String threadName = "Main";
 
 	long timeStart;
 	int startStrengthLvl;
@@ -60,7 +63,7 @@ public class Main extends Script {
 		eater.setThreadHandler(threadHandler);
 		itemManager.setThreadHandler(threadHandler);
 		log("Initialized ThreadHandler");
-		overWatch = new OverWatch(this,fighter,antiban,eater);
+		overWatch = new OverWatch(this,fighter,antiban,eater, itemManager);
 		overWatch.setThreadHandler(threadHandler);
 		overWatch.setState(mouseState.None);
 		
@@ -70,6 +73,8 @@ public class Main extends Script {
 		threadHandler.setOverWatch(overWatch);
 		itemManager.setOverWatch(overWatch);
 
+		antiban.setItemManager(itemManager);
+		
 		getKeyboard().initializeModule();
 		getCamera().initializeModule();
 		getInventory().initializeModule();
@@ -124,11 +129,14 @@ public class Main extends Script {
 	public void banking() throws InterruptedException{
 		if (!fighter.hasFood()) {
 			if (bank.bank()) {
+				threadHandler.logPrint(threadName, "Banking Succesful");
 				log("Banking Succesful");
 				fighter.reset();
 				if (!fighter.isInArea()) {
+					threadHandler.logPrint(threadName, "Not In area.");
 					log("Not In area.");
 					if (!fighter.walkToArea()) {
+						threadHandler.logPrint(threadName, "Couldn't walk back to area.");
 						log("Couldn't walk back to area.");
 						failCount++;
 					} else {
@@ -136,6 +144,7 @@ public class Main extends Script {
 					}
 				}
 			} else {
+				threadHandler.logPrint(threadName, "Banking Failed");
 				log("Banking Failed");
 			}
 		}
@@ -143,7 +152,7 @@ public class Main extends Script {
 	
 	public void fighting() throws InterruptedException{
 		if (!fighter.isFighting()) {
-			if(random(0,4) == 0 || pickupCount > random(4,7)){
+			if(random(0,4) == 0 || pickupCount > random(4,7) || itemManager.priorityPickup){
 				if(pickupRC.RC_FAIL == itemManager.pickupItems()){
 					return;
 				}
@@ -152,18 +161,23 @@ public class Main extends Script {
 				pickupCount++;
 			}
 			if (fighter.attack()) {
-				log("Attacked.");
+				threadHandler.logPrint(threadName, "Attacked.");
 				sleep(100);
 			} else {
+				threadHandler.logPrint(threadName, "Failed to attack.");
 				log("Failed to attack.");
 				if (!fighter.walkToNpcs()) {
 					if (!fighter.isInArea()) {
+						threadHandler.logPrint(threadName, "Not In area.");
 						log("Not In area.");
 						if (!fighter.walkToArea()) {
+							threadHandler.logPrint(threadName, "Couldn't walk back to area.");
 							log("Couldn't walk back to area.");
 							failCount++;
+							threadHandler.logPrint(threadName, "FailCount: " + failCount);
 						} else {
 							failCount = 0;
+							threadHandler.logPrint(threadName, "Reset FailCount: " + failCount);
 						}
 					}
 				} else {
@@ -177,6 +191,7 @@ public class Main extends Script {
 	
 	@Override
 	public void onMessage(Message message) throws InterruptedException {
+		threadHandler.logPrint(threadName, "onMessage: " + message.getMessage());
 		log("onMessage: " + message.getMessage());
 		if (message.getMessage().contains("Oh dear")) {
 			died();
@@ -229,5 +244,12 @@ public class Main extends Script {
 	@Override
 	public void onExit() {
 		threadHandler.kill();
+		try {
+			threadHandler.getExceptionFile().close();
+			threadHandler.getLogFile().close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

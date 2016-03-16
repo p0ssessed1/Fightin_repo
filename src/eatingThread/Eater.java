@@ -14,14 +14,14 @@ import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
 
 public class Eater implements Runnable {
-
+	final String threadName = "Eater";
 	Random rn;
 	Script script;
 	Fighting fighter;
 	Timer t = new Timer();
 	int minHP = 10;
 	int HP_BUFFER = 7;
-	boolean mouseOwned = false;
+	volatile boolean mouseOwned = false;
 	ThreadHandler threadHandler;
 	OverWatch overWatch;
 
@@ -73,6 +73,16 @@ public class Eater implements Runnable {
 		return ret;
 	}
 
+	private void releaseMouseOwned(){
+		if(mouseOwned){
+			mouseOwned = threadHandler.releaseMouse();
+		}
+	}
+	
+	public void resetMouseOwned(){
+		this.mouseOwned = false;
+	}
+	
 	@Override
 	public void run() {
 		synchronized (fighter) {
@@ -80,8 +90,10 @@ public class Eater implements Runnable {
 			while (!threadHandler.getThreadKillMessage()) {
 				try {
 					Thread.sleep(rn.nextInt(900) + 600);
-				} catch (InterruptedException e2) {
-					script.log("Exception in Thread sleep handler." + e2);
+				} catch (Exception e) {
+					script.log("Exception in Thread sleep handler." + e);
+					e.printStackTrace();
+					threadHandler.exceptionPrint(threadName, e);
 				}
 				while(!script.client.isLoggedIn()) {
 					try {
@@ -92,9 +104,10 @@ public class Eater implements Runnable {
 				}
 				try {
 					Thread.sleep(rn.nextInt(700) + 500);
-				} catch (InterruptedException e) {
+				} catch (Exception e) {
 					script.log("Sleep in eater failed. Exception:" + e);
 					e.printStackTrace();
+					threadHandler.exceptionPrint(threadName, e);
 				}
 				if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(HP_BUFFER))) {
 					try {
@@ -103,13 +116,12 @@ public class Eater implements Runnable {
 						}
 						overWatch.setState(mouseState.Eating);
 						tryEat();
-						mouseOwned = threadHandler.releaseMouse();
-					} catch (InterruptedException e) {
-						if(mouseOwned){
-							mouseOwned = threadHandler.releaseMouse();
-						}
+						releaseMouseOwned();
+					} catch (Exception e) {
+						releaseMouseOwned();
 						script.log("Exception in tryEat. " + e);
 						e.printStackTrace();
+						threadHandler.exceptionPrint(threadName, e);
 					}
 				}
 			}
