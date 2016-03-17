@@ -183,13 +183,13 @@ public class SimpleGui implements ActionListener {
 		optionPanel.add(prioritizeItems);
 		optionPanel.add(new Label("Food withdraw amount:"));
 		optionPanel.add(withdrawAmount);
-		optionPanel.add(new Label("Use previous settings:"));
-		optionPanel.add(previousSettings);
 		optionPanel.add(new Label("Choose Food from inventory:"));
 		for (JRadioButton b : food) {
 			bg_f.add(b);
 			optionPanel.add(b);
 		}
+		optionPanel.add(new Label("Use previous settings:"));
+		optionPanel.add(previousSettings);
 
 		JButton start = new JButton("Start");
 		start.addActionListener(this);
