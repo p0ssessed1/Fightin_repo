@@ -17,6 +17,7 @@ import eatingThread.Eater;
 import fighting.Fighting;
 import groundItemManager.GroundItemManager;
 import groundItemManager.GroundItemManager.pickupRC;
+import logger.Logger;
 import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
 import simpleGui.SimpleGui;
@@ -32,6 +33,7 @@ public class Main extends Script {
 	GroundItemManager itemManager;
 	ThreadHandler threadHandler;
 	OverWatch overWatch;
+	Logger logger;
 	
 	final String threadName = "Main";
 
@@ -48,7 +50,6 @@ public class Main extends Script {
 	
 	@Override
 	public void onStart() throws InterruptedException {
-		log("Starting.");
 		bank = new Banking(this);
 		log("Initialized banks");
 		fighter = new Fighting(this);
@@ -59,12 +60,15 @@ public class Main extends Script {
 		log("Initialized eating");
 		itemManager = new GroundItemManager(this, bank, fighter);
 		log("Initialized ground item manager");
-		threadHandler = new ThreadHandler(this, antiban, eater, itemManager);
+		logger = new Logger();
+		log("Initialized File Writer.");
+		threadHandler = new ThreadHandler(this, antiban, eater, itemManager, logger);
 		fighter.setThreadHandler(threadHandler);
 		bank.setThreadHandler(threadHandler);
 		antiban.setThreadHandler(threadHandler);
 		eater.setThreadHandler(threadHandler);
 		itemManager.setThreadHandler(threadHandler);
+		logger.setThreadHandler(threadHandler);
 		log("Initialized ThreadHandler");
 		overWatch = new OverWatch(this,fighter,antiban,eater, itemManager);
 		overWatch.setThreadHandler(threadHandler);

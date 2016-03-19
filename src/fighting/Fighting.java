@@ -82,7 +82,7 @@ public class Fighting {
 	 */
 	public boolean isFighting() throws InterruptedException {
 		for (int i = 0; i < 15; i++) {
-			Script.sleep(rn.nextInt(150) + 50);
+			Script.sleep(rn.nextInt(75) + 50);
 			try {
 				if (script.myPlayer().isAnimating() || (current != null && current.isInteracting(script.myPlayer())
 						&& current.getCurrentHealth() > 0) || script.getCombat().isFighting()) {

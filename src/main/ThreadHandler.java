@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.osbot.rs07.script.Script;
@@ -15,18 +17,23 @@ import org.osbot.rs07.script.Script;
 import antiban.Antiban;
 import eatingThread.Eater;
 import groundItemManager.GroundItemManager;
+import logger.Logger;
 import overWatch.OverWatch;
 
-public class ThreadHandler {
+public class ThreadHandler{
 	Thread antiBanThread;
 	Thread eatingThread;
 	Thread groundItemManagerThread;
 	Thread overWatchThread;
+	Thread loggerThread;
+	
+	BlockingQueue<String> logQueue;
 
 	final String threadName = "ThreadHandler";
 
 	long timestamp = 0;
 	long TIMEOUT_TIME_MS = 0;
+	Logger logger;
 	Antiban antiban;
 	Eater eater;
 	GroundItemManager itemManager;
@@ -42,11 +49,12 @@ public class ThreadHandler {
 	boolean settupStatus = false;
 	volatile boolean killThread = false;
 	AtomicBoolean mouseFlag = new AtomicBoolean(true);
-	AtomicBoolean writeLogFlag = new AtomicBoolean(true);
 	AtomicBoolean writeExceptionFlag = new AtomicBoolean(true);
 	OverWatch overWatch;
 
-	public ThreadHandler(Script script, Antiban antiban, Eater eater, GroundItemManager itemManager) {
+	public ThreadHandler(Script script, Antiban antiban, Eater eater, GroundItemManager itemManager, Logger logger) {
+		this.logger = logger;
+		this.logQueue = new LinkedBlockingQueue<String>();
 		this.script = script;
 		this.eater = eater;
 		this.antiban = antiban;
@@ -130,6 +138,11 @@ public class ThreadHandler {
 		overWatchThread.setPriority(Thread.NORM_PRIORITY);
 		overWatchThread.start();
 		script.log("Started new OverWatch thread.");
+		
+		loggerThread = new Thread(logger);
+		threadBank.add(loggerThread);
+		loggerThread.start();
+		script.log("Started new File Writer thread.");
 
 		settupStatus = true;
 	}
@@ -204,24 +217,9 @@ public class ThreadHandler {
 	}
 
 	public void logPrint(String location, String message) {
-		while (writeLogFlag.getAndSet(false)) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 		Calendar c = Calendar.getInstance();
-		try {
-			Lwriter.write(location + ": " + c.get(Calendar.HOUR_OF_DAY) + ":" + c.get(Calendar.MINUTE) + ":"
-					+ c.get(Calendar.SECOND) + "." + c.get(Calendar.MILLISECOND) + ": " + message);
-			Lwriter.newLine();
-			Lwriter.flush();
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		writeLogFlag.set(true);
+		logQueue.offer(location + ": " + c.get(Calendar.HOUR_OF_DAY) + ":" + c.get(Calendar.MINUTE) + ":"
+				+ c.get(Calendar.SECOND) + "." + c.get(Calendar.MILLISECOND) + ": " + message);	
 	}
 
 	public BufferedWriter getExceptionFile() {
@@ -230,5 +228,14 @@ public class ThreadHandler {
 
 	public BufferedWriter getLogFile() {
 		return this.Lwriter;
+	}
+	
+	public String getLogEntry(){
+		try {
+			return logQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
