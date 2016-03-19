@@ -88,7 +88,7 @@ public class Fighting {
 						&& current.getCurrentHealth() > 0) || script.getCombat().isFighting()) {
 					return true;
 				} else if (i == 14) {
-					current = null;
+					//current = null;
 					return false;
 				}
 			} catch (Exception e) {

@@ -8,6 +8,7 @@ import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.filter.NameFilter;
 import org.osbot.rs07.api.model.GroundItem;
 import org.osbot.rs07.api.model.Item;
+import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.ui.Skill;
 import org.osbot.rs07.script.Script;
 
@@ -19,6 +20,7 @@ import main.Timer;
 import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
 
+@SuppressWarnings("unchecked")
 public class GroundItemManager {
 
 	Random rn;
@@ -30,11 +32,13 @@ public class GroundItemManager {
 
 	Timer t = new Timer();
 	boolean enabled = false;
+	boolean buryingEnabled = false;
 	public boolean priorityPickup = false;
 	Filter<GroundItem> itemFilter;
 	List<GroundItem> items;
 	List<GroundItem> filteredItems = new LinkedList<GroundItem>();
 	OverWatch overWatch;
+	
 	volatile boolean mouseOwned;
 
 	public enum pickupRC {
@@ -103,8 +107,33 @@ public class GroundItemManager {
 		}
 		return false;
 	}
-
-	@SuppressWarnings("unchecked")
+	
+	public boolean getBurying(){
+		return this.buryingEnabled;
+	}
+	
+	public void setBurying(boolean bury){
+		this.buryingEnabled = bury; 
+	}
+	
+	private boolean boneBurryier() throws InterruptedException{
+		if(!buryingEnabled){
+			return false;
+		}
+		boolean ret = false;
+		Item bone;
+		while(null != (bone = script.getInventory().getItem(i -> (i.getName().contains("Bone") || i.getName().contains("bone"))  && i.hasAction("Bury")))){
+			while (!threadHandler.ownMouse()) {
+				Script.sleep(rn.nextInt(100) + 100);
+			}
+			overWatch.setState(mouseState.Eating);
+			ret = bone.interact("Bury");
+			threadHandler.releaseMouse();
+			Thread.sleep(rn.nextInt(500) + 250);
+		}
+		return ret;
+	}
+	
 	private boolean eatIfLow() throws InterruptedException {
 		boolean ret = false;
 		Item food = script.getInventory().getItem(i -> i.hasAction("Eat"));
@@ -133,8 +162,8 @@ public class GroundItemManager {
 		return ret;
 	}
 
-	@SuppressWarnings("unchecked")
 	public pickupRC pickupItems() throws InterruptedException {
+		NPC dieing = fighter.getCurrent();
 		fighter.reset();
 		pickupRC ret = pickupRC.RC_NONE;
 		boolean animated = false;
@@ -143,7 +172,18 @@ public class GroundItemManager {
 		}
 		GroundItem item;
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 25000;
-		Script.sleep(rn.nextInt(700) + 850);
+		int animatingTimeout = rn.nextInt(700) + 850;
+		int itemTimeout = rn.nextInt(300) + 300;
+		t.reset();
+		while(dieing != null && dieing.isAnimating() && t.timer(animatingTimeout)){
+			Script.sleep(50);
+		}
+		t.reset();
+		/* TODO - Update if monsters that drop nothing 100% are being killed. */
+		while(dieing != null && !script.getGroundItems().get(dieing.getPosition().getX(), dieing.getPosition().getY()).isEmpty() && t.timer(itemTimeout))
+		{
+			Script.sleep(50);
+		}
 		while ((item = script.getGroundItems().closest(true, gi -> itemFilter.match(gi) && isGroundItemValid(gi)
 				&& dynamicArea.getOverallArea().contains(gi))) != null) {
 			if (script.getInventory().isFull()) {
@@ -162,15 +202,19 @@ public class GroundItemManager {
 			}
 			if (animated) {
 				/* Means I miss-clicked and am attacking. */
-				Script.sleep(rn.nextInt(1000) + 1000);
+				script.log("MissClicked monster...");
+				Script.sleep(rn.nextInt(1000) + 5000);
 				return pickupRC.RC_FAIL;
 			}
 			ret = pickupRC.RC_OK;
-			Script.sleep(rn.nextInt(150) + 50);
+			Script.sleep(rn.nextInt(100) + 25);
 		}
+
+		boneBurryier();
+		
 		return ret;
 	}
-
+	
 	private void releaseMouseOwned(){
 		if(mouseOwned){
 			mouseOwned = threadHandler.releaseMouse();

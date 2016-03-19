@@ -44,6 +44,8 @@ public class Main extends Script {
 	int startAttackXp;
 	int startHpLvl;
 	int startHpXp;
+	int startPrayerLvl;
+	int startPrayerXp;
 	Timer t;
 	
 	int pickupCount = 0;
@@ -89,6 +91,8 @@ public class Main extends Script {
 		getMouse().initializeModule();
 
 		timeStart = System.currentTimeMillis();
+		startPrayerLvl = getExperienceTracker().getGainedLevels(Skill.PRAYER);
+		startPrayerXp = getExperienceTracker().getGainedXP(Skill.PRAYER);
 		startStrengthLvl = getExperienceTracker().getGainedLevels(Skill.STRENGTH);
 		startStrengthXp = getExperienceTracker().getGainedXP(Skill.STRENGTH);
 		startAttackLvl = getExperienceTracker().getGainedLevels(Skill.ATTACK);
@@ -260,7 +264,11 @@ public class Main extends Script {
 				+ (getExperienceTracker().getGainedLevels(Skill.ATTACK) - startAttackLvl) + ")", 8, 80);
 		g.drawString("Hitpoints XP: " + (getExperienceTracker().getGainedXP(Skill.HITPOINTS) - startHpXp) + " ("
 				+ (getExperienceTracker().getGainedLevels(Skill.HITPOINTS) - startHpLvl) + ")", 8, 95);
-
+		if(itemManager.getBurying()){
+			g.drawString("Prayer XP: " + (getExperienceTracker().getGainedXP(Skill.PRAYER) - startPrayerXp) + " ("
+					+ (getExperienceTracker().getGainedLevels(Skill.PRAYER) - startPrayerLvl) + ")", 8, 110);
+		}
+		
 	}
 
 	@Override

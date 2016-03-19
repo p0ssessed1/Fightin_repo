@@ -69,6 +69,7 @@ public class SimpleGui implements ActionListener {
 	JTextField pickupItems = new JTextField();
 	JTextField withdrawAmount = new JTextField();
 	JCheckBox prioritizeItems = new JCheckBox();
+	JCheckBox boneBurying = new JCheckBox();
 	JCheckBox previousSettings = new JCheckBox();
 	ButtonGroup bg_f = new ButtonGroup();
 	ButtonGroup bg_b = new ButtonGroup();
@@ -175,20 +176,27 @@ public class SimpleGui implements ActionListener {
 			optionPanel.add(b);
 		}
 
-		optionPanel.add(new Label("Health to eat at:"));
+		boneBurying.setText("Bury Bones?");
+		//optionPanel.add(new Label("Health to eat at:"));
+		health.setText("Health to eat at");
 		optionPanel.add(health);
-		optionPanel.add(new Label("Items to pick up (seperate by ;):"));
+		//optionPanel.add(new Label("Items to pick up (seperate by ;):"));
+		pickupItems.setText("Items to pick up (seperate by ;)");
 		optionPanel.add(pickupItems);
-		optionPanel.add(new Label("Always pick up: "));
+		//optionPanel.add(new Label("Always pick up: "));
+		prioritizeItems.setText("Always pick up");
 		optionPanel.add(prioritizeItems);
-		optionPanel.add(new Label("Food withdraw amount:"));
+		//optionPanel.add(new Label("Food withdraw amount: "));
+		withdrawAmount.setText("Food withdraw amount");
 		optionPanel.add(withdrawAmount);
 		optionPanel.add(new Label("Choose Food from inventory:"));
 		for (JRadioButton b : food) {
 			bg_f.add(b);
 			optionPanel.add(b);
 		}
-		optionPanel.add(new Label("Use previous settings:"));
+		optionPanel.add(boneBurying);
+		//optionPanel.add(new Label("Use previous settings:"));
+		previousSettings.setText("Use previous settings?");
 		optionPanel.add(previousSettings);
 
 		JButton start = new JButton("Start");
@@ -375,6 +383,14 @@ public class SimpleGui implements ActionListener {
 			writeToFile("False", writer);
 		}
 		nextSetting(writer);
+		
+		if(boneBurying.isSelected()){
+			itemManager.setBurying(true);
+			writeToFile("True", writer);
+		} else {
+			writeToFile("False",writer);
+		}
+		nextSetting(writer);
 
 		try {
 			writer.close();
@@ -475,7 +491,10 @@ public class SimpleGui implements ActionListener {
 				}
 				break;
 			case 8:
-				/* Not implemented yet, bone burrying slot. */
+				if((i != 0) && localStrings[0].contains("T")){
+					script.log("Setting Bone Burying: " + localStrings[0]);
+					itemManager.setBurying(true);
+				}
 				break;
 			default:
 				break;
