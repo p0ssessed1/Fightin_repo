@@ -23,6 +23,8 @@ import simpleGui.SimpleGui;
 
 @ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.8", version = .8, logo = "")
 public class Main extends Script {
+	final int UP_KEY = 38;
+	
 	Banking bank;
 	Fighting fighter;
 	Antiban antiban;
@@ -40,6 +42,7 @@ public class Main extends Script {
 	int startAttackXp;
 	int startHpLvl;
 	int startHpXp;
+	Timer t;
 	
 	int pickupCount = 0;
 	
@@ -94,6 +97,8 @@ public class Main extends Script {
 		gui.Setup();
 		log("Setup Gui");
 		gui.Display();
+		
+		t = new Timer();
 	}
 
 	int failCount = 0;
@@ -122,6 +127,19 @@ public class Main extends Script {
 				}
 			}
 		}
+		
+		if(random(0,1) == 0){
+			antiban.moveCamera();
+		} else if(getCamera().getPitchAngle() < random(58,60)){
+			t.reset();
+			getKeyboard().pressKey(UP_KEY);
+			int endAngle = random(63,67);
+			while(getCamera().getPitchAngle() < endAngle && t.timer(random(1500,2500))){
+				sleep(random(20,50));
+			}
+			getKeyboard().releaseKey(UP_KEY);
+		}
+		
 
 		return 0;
 	}

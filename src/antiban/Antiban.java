@@ -197,7 +197,7 @@ public class Antiban implements Runnable {
 		return ret;
 	}
 
-	private boolean moveCamera() throws InterruptedException {
+	public boolean moveCamera() throws InterruptedException {
 		if (!script.getMouse().isOnScreen() || state == State.CameraMoved) {
 			return false;
 		}
@@ -250,12 +250,12 @@ public class Antiban implements Runnable {
 			if (script.getCamera().getPitchAngle() < camera_end_val) {
 				script.getKeyboard().pressKey(UP_KEY);
 				while (script.getCamera().getPitchAngle() < camera_end_val && !script.getBot().isHumanInputEnabled()
-						&& t.timer(2000)) {
+						&& t.timer(rn.nextInt(1000) + 1500)) {
 				}
 			} else {
 				script.getKeyboard().pressKey(DOWN_KEY);
 				while (script.getCamera().getPitchAngle() > camera_end_val && !script.getBot().isHumanInputEnabled()
-						&& t.timer(2000)) {
+						&& t.timer(rn.nextInt(1000) + 1500)) {
 				}
 			}
 		} else {

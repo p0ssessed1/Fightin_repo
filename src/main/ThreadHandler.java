@@ -60,7 +60,7 @@ public class ThreadHandler {
 				+ c.get(Calendar.DATE);
 		File dir = new File(filepath);
 		dir.mkdirs();
-		String filename = filepath + "\\" + c.get(Calendar.HOUR) + "_" + c.get(Calendar.MINUTE) + ".txt";
+		String filename = filepath + "\\" + c.get(Calendar.HOUR_OF_DAY) + "_" + c.get(Calendar.MINUTE) + ".txt";
 		try {
 			Efile = new FileWriter(filename, true);
 			Ewriter = new BufferedWriter(Efile);
@@ -68,7 +68,7 @@ public class ThreadHandler {
 					+ c.get(Calendar.DATE);
 			dir = new File(filepath);
 			dir.mkdirs();
-			filename = filepath + "\\" + c.get(Calendar.DATE) + "_" + c.get(Calendar.HOUR) + "_"
+			filename = filepath + "\\" + c.get(Calendar.HOUR_OF_DAY) + "_"
 					+ c.get(Calendar.MINUTE) + ".txt";
 			Lfile = new FileWriter(filename, true);
 			Lwriter = new BufferedWriter(Lfile);
@@ -183,10 +183,10 @@ public class ThreadHandler {
 		try {
 			Ewriter.write("=====================================");
 			Ewriter.newLine();
-			Ewriter.write(thread);
-			Ewriter.write(c.get(Calendar.HOUR) + ":" + c.get(Calendar.MINUTE) + ":" + c.get(Calendar.SECOND)
-					+ c.get(Calendar.MILLISECOND) + ": ");
 			Ewriter.write(e.getMessage());
+			Ewriter.newLine();
+			Ewriter.write(thread+ ": " + c.get(Calendar.HOUR_OF_DAY) + ":" + c.get(Calendar.MINUTE) + ":" + c.get(Calendar.SECOND)
+					+ "." + c.get(Calendar.MILLISECOND) + ": ");
 			Ewriter.newLine();
 			StackTraceElement[] element = e.getStackTrace();
 			for (StackTraceElement ste : element) {
@@ -213,8 +213,8 @@ public class ThreadHandler {
 		}
 		Calendar c = Calendar.getInstance();
 		try {
-			Lwriter.write(location + ": " + c.get(Calendar.HOUR) + ":" + c.get(Calendar.MINUTE) + ":"
-					+ c.get(Calendar.SECOND) + ":" + c.get(Calendar.MILLISECOND) + ": " + message);
+			Lwriter.write(location + ": " + c.get(Calendar.HOUR_OF_DAY) + ":" + c.get(Calendar.MINUTE) + ":"
+					+ c.get(Calendar.SECOND) + "." + c.get(Calendar.MILLISECOND) + ": " + message);
 			Lwriter.newLine();
 			Lwriter.flush();
 		} catch (Exception e1) {
