@@ -20,9 +20,13 @@ import java.util.StringTokenizer;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 import org.osbot.rs07.api.filter.ActionFilter;
@@ -47,9 +51,10 @@ public class SimpleGui implements ActionListener {
 	final Area WEST_VARROCK = new Area(new Position(3185, 3436, 0), new Position(3182, 3444, 0));
 	final Area LUMBRIDGE = new Area(new Position(3208, 3220, 2), new Position(3209, 3218, 2));
 	final Area EDGEVILLE = new Area(new Position(3094, 3489, 0), new Position(3092, 3495, 0));
-	final Area[] BANKS = { DRAYNOR, EAST_FALLY, WEST_FALLY, EAST_VARROCK, WEST_VARROCK, LUMBRIDGE, EDGEVILLE };
-	final List<String> BANK_NAMES = new LinkedList<String>(Arrays.asList("Draynor", "East Falador", "West Falador",
-			"East Varrock", "West Varrock", "Lumbridge", "Edgeville"));
+	final Area ALKHARID = new Area(new Position(3269,3169,0), new Position(3270,3164,0));
+	final Area[] BANKS = { ALKHARID, EDGEVILLE, DRAYNOR, EAST_FALLY, WEST_FALLY, LUMBRIDGE, EAST_VARROCK, WEST_VARROCK };
+	final List<String> BANK_NAMES = new LinkedList<String>(Arrays.asList("Al-Kharid", "Edgeville", "Draynor", "East Falador",
+			"West Falador", "Lumbridge", "East Varrock", "West Varrock"));
 
 	Script script;
 	boolean setUp = false;
@@ -78,20 +83,16 @@ public class SimpleGui implements ActionListener {
 	ActionFilter<NPC> f;
 	String path;
 	String filepath;
-	JPanel panel = new JPanel(new GridLayout(0, 1));
-	
-	private static boolean isNumeric(String str)  
-	{  
-	  try  
-	  {  
-	    @SuppressWarnings("unused")
-		double d = Double.parseDouble(str);  
-	  }  
-	  catch(NumberFormatException nfe)  
-	  {  
-	    return false;  
-	  }  
-	  return true;  
+	JTabbedPane tabbedPanel = new JTabbedPane();
+
+	private static boolean isNumeric(String str) {
+		try {
+			@SuppressWarnings("unused")
+			double d = Double.parseDouble(str);
+		} catch (NumberFormatException nfe) {
+			return false;
+		}
+		return true;
 	}
 
 	public SimpleGui(Script script, Fighting fighter, Banking bank, Eater eater, ItemManager itemManager) {
@@ -103,22 +104,13 @@ public class SimpleGui implements ActionListener {
 		path = System.getProperty("user.dir") + "\\OSBotLogs\\";
 	}
 
-	/**
-	 * Sets up a simple Gui with start button.
-	 * 
-	 * @return Void
-	 */
-	public void Setup() {
+	private JComponent fightingSetup(){
 		List<NPC> monsters = script.getNpcs().getAll();
 		List<String> monsterNames = new LinkedList<String>();
-		JPanel fightingPanel = new JPanel(new GridLayout(0, 3));
-		fightingPanel.add(new Label("Monster to fight:"));
-		fightingPanel.add(new Label("   "));
-		JPanel bankPanel = new JPanel(new GridLayout(0, 3));
-		bankPanel.add(new Label("Banks: "));
-		bankPanel.add(new Label("       "));
-		JPanel optionPanel = new JPanel(new GridLayout(0, 2));
-		optionPanel.add(new Label("Keep Items:"));
+		JComponent fightingPanel = new JPanel(new GridLayout(0, 1));
+		JPanel monsterPanel = new JPanel(new GridLayout(0,2));
+		JPanel optionPanel = new JPanel(new GridLayout(0,2));
+		monsterPanel.add(new Label("Monster to fight:"));
 		for (NPC n : monsters) {
 			if (n != null && n.hasAction("Attack") && n.exists() && script.map.canReach(n)) {
 				script.log("Monster located.");
@@ -138,21 +130,40 @@ public class SimpleGui implements ActionListener {
 		}
 
 		for (JCheckBox b : fightingOptions) {
-			fightingPanel.add(b);
+			monsterPanel.add(b);
 		}
+		fightingPanel.add(monsterPanel);
+		optionPanel.add(new JSeparator());
+		optionPanel.add(new JSeparator());
+		range.setText("Ranging mode.");
+		optionPanel.add(range);
+		arrows.setText("arrow");
+		optionPanel.add(arrows);
+		health.setText("Health to eat at");
+		optionPanel.add(health);
+		fightingPanel.add(optionPanel);
+		return fightingPanel;
+	}
+	
+	private JComponent bankSetup(){
+		JComponent bankPanel = new JPanel(new GridLayout(0, 1));
+		JPanel banksPanel = new JPanel(new GridLayout(0, 2));
+		JPanel keepPanel = new JPanel(new GridLayout(0, 2));
+		JPanel foodPanel = new JPanel(new GridLayout(0, 2));
+		Item[] inv = script.getInventory().getItems();
+		List<String> exclusiveInv = new LinkedList<String>();
+		List<Item> exclusiveItemInv = new LinkedList<Item>();
 
+		banksPanel.add(new Label("Banks: "));
 		for (String s : BANK_NAMES) {
 			banks.add(new JRadioButton(s));
 		}
 
 		for (JRadioButton b : banks) {
 			bg_b.add(b);
-			bankPanel.add(b);
+			banksPanel.add(b);
 		}
 
-		Item[] inv = script.getInventory().getItems();
-		List<String> exclusiveInv = new LinkedList<String>();
-		List<Item> exclusiveItemInv = new LinkedList<Item>();
 		for (Item i : inv) {
 			if (i != null) {
 				if (!exclusiveInv.contains(i.getName())) {
@@ -162,56 +173,77 @@ public class SimpleGui implements ActionListener {
 			}
 		}
 
-		for (Item i : exclusiveItemInv) {
-			if (i != null && i.hasAction("Eat")) {
-				food.add(new JRadioButton(i.getName()));
-			}
-		}
-
 		for (String i : exclusiveInv) {
 			if (i != null) {
 				keep.add(new JCheckBox(i));
 			}
 		}
 
+		keepPanel.add(new JSeparator());
+		keepPanel.add(new JSeparator());
+		keepPanel.add(new Label("Keep Items:"));
 		for (JCheckBox b : keep) {
-			optionPanel.add(b);
+			keepPanel.add(b);
 		}
 
-		boneBurying.setText("Bury Bones?");
-		//optionPanel.add(new Label("Health to eat at:"));
-		health.setText("Health to eat at");
-		optionPanel.add(health);
-		//optionPanel.add(new Label("Items to pick up (seperate by ;):"));
-		pickupItems.setText("Items to pick up (seperate by ;)");
-		optionPanel.add(pickupItems);
-		arrows.setText("arrow");
-		optionPanel.add(arrows);
-		//optionPanel.add(new Label("Always pick up: "));
-		prioritizeItems.setText("Always pick up");
-		optionPanel.add(prioritizeItems);
-		//optionPanel.add(new Label("Food withdraw amount: "));
-		withdrawAmount.setText("Food withdraw amount");
-		optionPanel.add(withdrawAmount);
-		range.setText("Ranging mode.");
-		optionPanel.add(range);
-		optionPanel.add(new Label("Choose Food from inventory:"));
+		for (Item i : exclusiveItemInv) {
+			if (i != null && i.hasAction("Eat")) {
+				food.add(new JRadioButton(i.getName()));
+			}
+		}
+
+		foodPanel.add(new JSeparator());
+		foodPanel.add(new JSeparator());
+		foodPanel.add(new Label("Choose Food from inventory:"));
 		for (JRadioButton b : food) {
 			bg_f.add(b);
-			optionPanel.add(b);
+			foodPanel.add(b);
 		}
+
+		withdrawAmount.setText("Food withdraw amount");
+		foodPanel.add(withdrawAmount);
+		
+		bankPanel.add(banksPanel);
+		bankPanel.add(keepPanel);
+		bankPanel.add(foodPanel);
+
+		return bankPanel;
+	}
+	
+	private JComponent optionSetup(){
+		JComponent optionPanel = new JPanel();
+
+		boneBurying.setText("Bury Bones?");
 		optionPanel.add(boneBurying);
-		//optionPanel.add(new Label("Use previous settings:"));
-		previousSettings.setText("Use previous settings?");
-		optionPanel.add(previousSettings);
+		prioritizeItems.setText("Always pick up");
+		optionPanel.add(prioritizeItems);
+		pickupItems.setText("Items to pick up (seperate by ;)");
+		optionPanel.add(pickupItems);
+
+		return optionPanel;
+	}
+	
+	/**
+	 * Sets up a simple Gui with start button.
+	 * 
+	 * @return Void
+	 */
+	public void Setup() {
+		JMenuBar mb = new JMenuBar();
+		JComponent fightingPanel = fightingSetup();
+		JComponent bankPanel = bankSetup();
+		JComponent optionPanel = optionSetup();
 
 		JButton start = new JButton("Start");
 		start.addActionListener(this);
-		panel.add(fightingPanel, BorderLayout.NORTH);
-		panel.add(bankPanel);
-		panel.add(optionPanel);
-		panel.add(start);
-		frame.add(panel);
+		tabbedPanel.addTab("Fighting Options", null, fightingPanel, "Options for fighting.");
+		tabbedPanel.addTab("Banking Options", null, bankPanel, "Options for banking.");
+		tabbedPanel.addTab("Options", null, optionPanel, "Miscellanious options");
+		previousSettings.setText("Use previous settings?");
+		mb.add(previousSettings, BorderLayout.WEST);
+		mb.add(start, BorderLayout.EAST);
+		frame.setJMenuBar(mb);
+		frame.add(tabbedPanel);
 		frame.pack();
 
 		filepath = path + "Settings\\";
@@ -365,7 +397,7 @@ public class SimpleGui implements ActionListener {
 			e.printStackTrace();
 			script.stop();
 		}
-		if(arrows.getText() != null && range.isSelected()){
+		if (arrows.getText() != null && range.isSelected()) {
 			script.log("Setting Arrows: " + arrows.getText());
 			arrowName = arrows.getText();
 			itemManager.setArrows(arrowName);
@@ -380,7 +412,7 @@ public class SimpleGui implements ActionListener {
 				writeToFile(items[i], writer);
 				i++;
 			}
-			if(range.isSelected() && arrowName != null){
+			if (range.isSelected() && arrowName != null) {
 				items[i] = arrowName;
 				i++;
 			}
@@ -399,27 +431,27 @@ public class SimpleGui implements ActionListener {
 			writeToFile("False", writer);
 		}
 		nextSetting(writer);
-		
-		if(boneBurying.isSelected()){
+
+		if (boneBurying.isSelected()) {
 			itemManager.setBurying(true);
 			writeToFile("True", writer);
 		} else {
-			writeToFile("False",writer);
+			writeToFile("False", writer);
 		}
 		nextSetting(writer);
-		
-		if(arrowName != null){
-			writeToFile(arrowName,writer);
+
+		if (arrowName != null) {
+			writeToFile(arrowName, writer);
 		} else {
 			writeToFile("None", writer);
 		}
 		nextSetting(writer);
-		
-		if(range.isSelected()){
+
+		if (range.isSelected()) {
 			itemManager.setRange(true);
 			writeToFile("True", writer);
 		} else {
-			writeToFile("False",writer);
+			writeToFile("False", writer);
 		}
 		nextSetting(writer);
 
@@ -516,25 +548,25 @@ public class SimpleGui implements ActionListener {
 				}
 				break;
 			case 7:
-				if((i != 0) && localStrings[0].contains("T")){
+				if ((i != 0) && localStrings[0].contains("T")) {
 					script.log("Setting priority pickup: " + localStrings[0]);
 					itemManager.setPriorityPickup();
 				}
 				break;
 			case 8:
-				if((i != 0) && localStrings[0].contains("T")){
+				if ((i != 0) && localStrings[0].contains("T")) {
 					script.log("Setting Bone Burying: " + localStrings[0]);
 					itemManager.setBurying(true);
 				}
 				break;
 			case 9:
-				if((i != 0) && !localStrings[0].contains("None")){
+				if ((i != 0) && !localStrings[0].contains("None")) {
 					script.log("Setting arrow: " + localStrings[0]);
 					itemManager.setArrows(localStrings[0]);
 				}
 				break;
 			case 10:
-				if((i != 0) && localStrings[0].contains("T")){
+				if ((i != 0) && localStrings[0].contains("T")) {
 					script.log("Setting Ranging: " + localStrings[0]);
 					itemManager.setRange(true);
 				}

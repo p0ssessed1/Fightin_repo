@@ -189,7 +189,7 @@ public class Fighting {
 	 */
 	public boolean isNpcValid(NPC npc) {
 		if (npc != null && script.map.canReach(npc)) {
-			if (actionFilter.match(npc) && monsterFilter.match(npc)) {
+			if (actionFilter != null && monsterFilter != null && actionFilter.match(npc) && monsterFilter.match(npc)) {
 				int id = npc.getId();
 				if (id != -1) {
 					for (NPC i : script.getNpcs().get(npc.getX(), npc.getY())) {
