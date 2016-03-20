@@ -229,8 +229,8 @@ public class ItemManager {
 		threadHandler.logPrint(threadName, "Picking up:");
 		GroundItem item;
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 25000;
-		int animatingTimeout = rn.nextInt(700) + 850;
-		int itemTimeout = rn.nextInt(300) + 300;
+		int animatingTimeout = rn.nextInt(700) + 950;
+		int itemTimeout = rn.nextInt(400) + 400;
 		if (!getRange()) {
 			t.reset();
 			while (dieing != null && dieing.isAnimating() && t.timer(animatingTimeout)) {
@@ -247,6 +247,7 @@ public class ItemManager {
 				Script.sleep(50);
 			}
 		}
+		Script.sleep(rn.nextInt(100) + 100);
 		while ((item = script.getGroundItems().closest(true, gi -> itemFilter.match(gi) && isGroundItemValid(gi)
 				&& dynamicArea.getOverallArea().contains(gi))) != null) {
 			threadHandler.logPrint(threadName, "Picking up: " + item.getName());
