@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.ui.Message;
@@ -22,7 +24,7 @@ import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
 import simpleGui.SimpleGui;
 
-@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.8", version = .8, logo = "")
+@ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.9", version = .9, logo = "")
 public class Main extends Script {
 	final int UP_KEY = 38;
 
@@ -49,6 +51,8 @@ public class Main extends Script {
 	int startRangeLvl;
 	int startRangeXp;
 	Timer t;
+	Timer paintTimer;
+	int paintTimeout = 30000;
 
 	int pickupCount = 0;
 
@@ -111,6 +115,8 @@ public class Main extends Script {
 		gui.Display();
 
 		t = new Timer();
+		paintTimer = new Timer();
+		paintTimer.timer(paintTimeout);
 	}
 
 	int failCount = 0;
@@ -135,7 +141,12 @@ public class Main extends Script {
 		if (random(0, 1) == 0) {
 			if (getSettings().getRunEnergy() > random(15, 40)) {
 				if (!getSettings().isRunning()) {
+					while(!threadHandler.ownMouse()){
+						sleep(random(1,100) + 1);
+					}
+					overWatch.setState(mouseState.SETTINGS);
 					getSettings().setRunning(true);
+					threadHandler.releaseMouse();
 				}
 			}
 		}
@@ -263,6 +274,8 @@ public class Main extends Script {
 
 	@Override
 	public void onPaint(Graphics2D g) {
+		DecimalFormat df = new DecimalFormat("#######.#");
+		df.setRoundingMode(RoundingMode.HALF_UP);
 		long timeElapsed = System.currentTimeMillis() - timeStart;
 		long seconds = (timeElapsed / 1000) % 60;
 		long minutes = (timeElapsed / (1000 * 60)) % 60;
@@ -276,22 +289,87 @@ public class Main extends Script {
 				8, 50);
 		if (itemManager.getRange()) {
 			g.drawString("Ranged XP: " + (getExperienceTracker().getGainedXP(Skill.RANGED) - startRangeXp) + " ("
-					+ (getExperienceTracker().getGainedLevels(Skill.RANGED) - startRangeLvl) + ")", 8, 80);
+					+ (getExperienceTracker().getGainedLevels(Skill.RANGED) - startRangeLvl) + ") " + df.format(xpPerHour(Skill.RANGED))+"/hr", 8, 80);
 		} else {
 			g.drawString("Strength XP: " + (getExperienceTracker().getGainedXP(Skill.STRENGTH) - startStrengthXp) + " ("
-					+ (getExperienceTracker().getGainedLevels(Skill.STRENGTH) - startStrengthLvl) + ")", 8, 65);
+					+ (getExperienceTracker().getGainedLevels(Skill.STRENGTH) - startStrengthLvl) + ") "+ df.format(xpPerHour(Skill.STRENGTH)) +"/hr", 8, 65);
 			g.drawString("Attack XP: " + (getExperienceTracker().getGainedXP(Skill.ATTACK) - startAttackXp) + " ("
-					+ (getExperienceTracker().getGainedLevels(Skill.ATTACK) - startAttackLvl) + ")", 8, 80);
+					+ (getExperienceTracker().getGainedLevels(Skill.ATTACK) - startAttackLvl) + ") "+ df.format(xpPerHour(Skill.ATTACK)) +"/hr", 8, 80);
 		}
-		g.drawString("Hitpoints XP: " + (getExperienceTracker().getGainedXP(Skill.HITPOINTS) - startHpXp) + " ("
-				+ (getExperienceTracker().getGainedLevels(Skill.HITPOINTS) - startHpLvl) + ")", 8, 95);
 		if (itemManager.getBurying()) {
 			g.drawString("Prayer XP: " + (getExperienceTracker().getGainedXP(Skill.PRAYER) - startPrayerXp) + " ("
-					+ (getExperienceTracker().getGainedLevels(Skill.PRAYER) - startPrayerLvl) + ")", 8, 110);
+					+ (getExperienceTracker().getGainedLevels(Skill.PRAYER) - startPrayerLvl) + ") "+ df.format(xpPerHour(Skill.PRAYER)) +"/hr", 8, 110);
 		}
+		g.drawString("Hitpoints XP: " + (getExperienceTracker().getGainedXP(Skill.HITPOINTS) - startHpXp) + " ("
+				+ (getExperienceTracker().getGainedLevels(Skill.HITPOINTS) - startHpLvl) + ") "+ df.format(xpPerHour(Skill.HITPOINTS)) +"/hr", 8, 95);
 
 	}
 
+	long strengthPHr;
+	long attackPHr;
+	long prayerPHr;
+	long hitpointsPHr;
+	long rangedPHr;
+	
+	private long xpPerHour(Skill skill){
+		long timeElapsed = System.currentTimeMillis() - timeStart;
+		int startXp = 0;
+		int currentXp = getExperienceTracker().getGainedXP(skill);
+		long diffMs;
+		switch(skill){
+		case ATTACK:
+			if(!paintTimer.timer(paintTimeout)){
+				startXp = startAttackXp;
+				diffMs = (currentXp - startXp)*(60 * 60)/(timeElapsed/1000);
+				attackPHr = diffMs;
+			} else {
+				return attackPHr;
+			}
+			break;
+		case STRENGTH:
+			if(!paintTimer.timer(paintTimeout)){
+			startXp = startStrengthXp;
+			diffMs = (currentXp - startXp)*(60 * 60)/(timeElapsed/1000);
+			strengthPHr = diffMs;
+			} else {
+				return strengthPHr;
+			}
+			break;
+		case PRAYER:
+			if(!paintTimer.timer(paintTimeout)){
+			startXp = startPrayerXp;
+			diffMs = (currentXp - startXp)*(60 * 60)/(timeElapsed/1000);
+			prayerPHr = diffMs;
+			} else {
+				return prayerPHr;
+			}
+			break;
+		case RANGED:
+			if(!paintTimer.timer(paintTimeout)){
+			startXp = startRangeXp;
+			diffMs = (currentXp - startXp)*(60 * 60)/(timeElapsed/1000);
+			rangedPHr = diffMs;
+			} else {
+				return rangedPHr;
+			}
+			break;
+		case HITPOINTS:
+			if(!paintTimer.timer(paintTimeout)){
+				startXp = startHpXp;
+				diffMs = (currentXp - startXp)*(60 * 60)/(timeElapsed/1000);
+				hitpointsPHr = diffMs;
+				paintTimer.reset();
+			} else {
+				return  hitpointsPHr;
+			}
+			break;
+		default:
+			return 0;
+		}
+
+		return diffMs;
+	}
+	
 	@Override
 	public void onExit() {
 		threadHandler.kill();

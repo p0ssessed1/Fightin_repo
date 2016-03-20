@@ -171,7 +171,7 @@ public class Fighting {
 		return false;
 	}
 
-	private boolean criticalAttack(NPC monster) throws InterruptedException {
+	public boolean criticalAttack(NPC monster) throws InterruptedException {
 		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}

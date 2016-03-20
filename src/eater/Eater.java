@@ -19,8 +19,9 @@ public class Eater implements Runnable {
 	Script script;
 	Fighting fighter;
 	Timer t = new Timer();
-	int minHP = 10;
-	int hpBuffer = 7;
+	int minHP = 25;
+	int hpBuffer = 8;
+	int hpToEatAt = 17;
 	volatile boolean mouseOwned = false;
 	ThreadHandler threadHandler;
 	OverWatch overWatch;
@@ -42,36 +43,55 @@ public class Eater implements Runnable {
 	public void setHealth(int health) {
 		script.log("Health set to " + health);
 		this.minHP = health;
+		this.hpBuffer = script.getSkills().getStatic(Skill.HITPOINTS)/8;
+		this.hpToEatAt = minHP + rn.nextInt(hpBuffer);
 	}
 
+	private boolean criticalEat(Item food) throws InterruptedException{
+		boolean ret = false;
+		while (!(mouseOwned = threadHandler.ownMouse())) {
+			Thread.sleep(rn.nextInt(100) + 100);
+		}
+		overWatch.setState(mouseState.INVINTERACTION);
+		ret = food.interact("Eat");
+		releaseMouseOwned();
+		return ret;
+	}
+	
 	@SuppressWarnings("unchecked")
 	private boolean tryEat() throws InterruptedException {
+		this.hpToEatAt = minHP + rn.nextInt(hpBuffer);
 		boolean ret = false;
 		ActionFilter<Item> eat = new ActionFilter<Item>("Eat");
 		Item food = script.getInventory().getItem(eat);
 		Thread.sleep(rn.nextInt(700) + 600);
 		if (food != null) {
 			boolean wasMoving = script.myPlayer().isMoving();
-			ret = food.interact("Eat");
+			ret = criticalEat(food);
 			int hpThreshold = rn.nextInt(10) + 75;
 			while (((script.getSkills().getDynamic(Skill.HITPOINTS) * 100)
 					/ script.getSkills().getStatic(Skill.HITPOINTS)) < hpThreshold) {
 				Thread.sleep(rn.nextInt(550) + 450);
-				food.interact("Eat");
+				food = script.getInventory().getItem(eat);
+				if(food != null) {
+					criticalEat(food);
+				} else {
+					break;
+				}
 			}
 			if (wasMoving) {
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (fighter.getCurrent() != null && fighter.getCurrent().exists()) {
-					fighter.getCurrent().interact("Attack");
+					fighter.criticalAttack(fighter.getCurrent());
 				} else if (fighter.getRightClicked() != null && fighter.getRightClicked().exists()) {
-					fighter.getRightClicked().interact("Attack");
+					fighter.criticalAttack(fighter.getRightClicked());
 				}
 			} else if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
 				if (rn.nextInt(10) < 8) {
 					if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(hpBuffer))
 							&& fighter.getCurrent() != null && fighter.getCurrent().getCurrentHealth() > 1) {
 						Thread.sleep(rn.nextInt(900) + 900);
-						fighter.getCurrent().interact("Attack");
+						fighter.criticalAttack(fighter.getCurrent());
 					}
 				}
 			}
@@ -115,14 +135,9 @@ public class Eater implements Runnable {
 					e.printStackTrace();
 					threadHandler.exceptionPrint(threadName, e);
 				}
-				if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(hpBuffer))) {
+				if (script.getSkills().getDynamic(Skill.HITPOINTS) < hpToEatAt) {
 					try {
-						while (!(mouseOwned = threadHandler.ownMouse())) {
-							Thread.sleep(rn.nextInt(300) + 300);
-						}
-						overWatch.setState(mouseState.INVINTERACTION);
 						tryEat();
-						releaseMouseOwned();
 					} catch (Exception e) {
 						releaseMouseOwned();
 						script.log("Exception in tryEat. " + e);
