@@ -34,9 +34,9 @@ import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.script.Script;
 
 import banking.Banking;
-import eatingThread.Eater;
+import eater.Eater;
 import fighting.Fighting;
-import groundItemManager.GroundItemManager;
+import itemManager.ItemManager;
 
 public class SimpleGui implements ActionListener {
 
@@ -57,7 +57,7 @@ public class SimpleGui implements ActionListener {
 	Banking bank;
 	Fighting fight;
 	Eater eater;
-	GroundItemManager itemManager;
+	ItemManager itemManager;
 
 	JFrame frame = new JFrame("Dynamic Fighter");
 	NameFilter<Item> keepItems;
@@ -68,8 +68,10 @@ public class SimpleGui implements ActionListener {
 	JTextField health = new JTextField();
 	JTextField pickupItems = new JTextField();
 	JTextField withdrawAmount = new JTextField();
+	JTextField arrows = new JTextField();
 	JCheckBox prioritizeItems = new JCheckBox();
 	JCheckBox boneBurying = new JCheckBox();
+	JCheckBox range = new JCheckBox();
 	JCheckBox previousSettings = new JCheckBox();
 	ButtonGroup bg_f = new ButtonGroup();
 	ButtonGroup bg_b = new ButtonGroup();
@@ -92,7 +94,7 @@ public class SimpleGui implements ActionListener {
 	  return true;  
 	}
 
-	public SimpleGui(Script script, Fighting fighter, Banking bank, Eater eater, GroundItemManager itemManager) {
+	public SimpleGui(Script script, Fighting fighter, Banking bank, Eater eater, ItemManager itemManager) {
 		this.script = script;
 		this.fight = fighter;
 		this.bank = bank;
@@ -183,12 +185,16 @@ public class SimpleGui implements ActionListener {
 		//optionPanel.add(new Label("Items to pick up (seperate by ;):"));
 		pickupItems.setText("Items to pick up (seperate by ;)");
 		optionPanel.add(pickupItems);
+		arrows.setText("arrow");
+		optionPanel.add(arrows);
 		//optionPanel.add(new Label("Always pick up: "));
 		prioritizeItems.setText("Always pick up");
 		optionPanel.add(prioritizeItems);
 		//optionPanel.add(new Label("Food withdraw amount: "));
 		withdrawAmount.setText("Food withdraw amount");
 		optionPanel.add(withdrawAmount);
+		range.setText("Ranging mode.");
+		optionPanel.add(range);
 		optionPanel.add(new Label("Choose Food from inventory:"));
 		for (JRadioButton b : food) {
 			bg_f.add(b);
@@ -245,6 +251,7 @@ public class SimpleGui implements ActionListener {
 		List<String> to_keep = new LinkedList<String>();
 		String[] selectedMonsters = new String[fightingOptions.size()];
 		BufferedWriter writer = null;
+		String arrowName = null;
 		if (previousSettings.isSelected()) {
 			try {
 				readFile();
@@ -358,14 +365,23 @@ public class SimpleGui implements ActionListener {
 			e.printStackTrace();
 			script.stop();
 		}
-
+		if(arrows.getText() != null && range.isSelected()){
+			script.log("Setting Arrows: " + arrows.getText());
+			arrowName = arrows.getText();
+			itemManager.setArrows(arrowName);
+			writeToFile(arrowName, writer);
+		}
 		if (pickupItems.getText() != null) {
 			StringTokenizer st = new StringTokenizer(pickupItems.getText(), ";,.");
-			String[] items = new String[st.countTokens()];
+			String[] items = new String[st.countTokens() + (range.isSelected() ? 1 : 0)];
 			int i = 0;
 			while (st.hasMoreTokens()) {
 				items[i] = st.nextToken();
 				writeToFile(items[i], writer);
+				i++;
+			}
+			if(range.isSelected() && arrowName != null){
+				items[i] = arrowName;
 				i++;
 			}
 			if (i != 0) {
@@ -373,8 +389,8 @@ public class SimpleGui implements ActionListener {
 			} else {
 				writeToFile("None", writer);
 			}
-			nextSetting(writer);
 		}
+		nextSetting(writer);
 
 		if (prioritizeItems.isSelected()) {
 			itemManager.setPriorityPickup();
@@ -386,6 +402,21 @@ public class SimpleGui implements ActionListener {
 		
 		if(boneBurying.isSelected()){
 			itemManager.setBurying(true);
+			writeToFile("True", writer);
+		} else {
+			writeToFile("False",writer);
+		}
+		nextSetting(writer);
+		
+		if(arrowName != null){
+			writeToFile(arrowName,writer);
+		} else {
+			writeToFile("None", writer);
+		}
+		nextSetting(writer);
+		
+		if(range.isSelected()){
+			itemManager.setRange(true);
 			writeToFile("True", writer);
 		} else {
 			writeToFile("False",writer);
@@ -494,6 +525,18 @@ public class SimpleGui implements ActionListener {
 				if((i != 0) && localStrings[0].contains("T")){
 					script.log("Setting Bone Burying: " + localStrings[0]);
 					itemManager.setBurying(true);
+				}
+				break;
+			case 9:
+				if((i != 0) && !localStrings[0].contains("None")){
+					script.log("Setting arrow: " + localStrings[0]);
+					itemManager.setArrows(localStrings[0]);
+				}
+				break;
+			case 10:
+				if((i != 0) && localStrings[0].contains("T")){
+					script.log("Setting Ranging: " + localStrings[0]);
+					itemManager.setRange(true);
 				}
 				break;
 			default:

@@ -114,7 +114,7 @@ public class Fighting {
 				while (!(mouseOwned = threadHandler.ownMouse())) {
 					Script.sleep(rn.nextInt(100) + 100);
 				}
-				overWatch.setState(mouseState.Walking);
+				overWatch.setState(mouseState.WALKING);
 				if (script.getWalking().webWalk(dynamicArea.getRandomArea(fightingAreas))) {
 					Script.sleep(rn.nextInt(100) + 200);
 					walked = true;
@@ -150,7 +150,7 @@ public class Fighting {
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		if (rn.nextInt(5) < 2) {
 			monster = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
-					&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating()));
+					&& n.isVisible() && !(n.isUnderAttack() || n.isAnimating() || !n.isAttackable()));
 		} else {
 			monster = script.getNpcs().closest(true,
 					n -> actionFilter.match(n) && monsterFilter.match(n) && !(n.isUnderAttack() || n.isAnimating()));
@@ -175,7 +175,7 @@ public class Fighting {
 		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}
-		overWatch.setState(mouseState.Attacking);
+		overWatch.setState(mouseState.ATTACKING);
 		boolean ret = monster.interact(action);
 		releaseMouseOwned();
 		return ret;
@@ -350,7 +350,7 @@ public class Fighting {
 				while (!(mouseOwned = threadHandler.ownMouse())) {
 					Script.sleep(rn.nextInt(100) + 100);
 				}
-				overWatch.setState(mouseState.Walking);
+				overWatch.setState(mouseState.WALKING);
 				script.getWalking().walk(npc.getArea(2));
 				releaseMouseOwned();
 			}
@@ -365,7 +365,7 @@ public class Fighting {
 		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}
-		overWatch.setState(mouseState.AntiBan);
+		overWatch.setState(mouseState.ANTIBAN);
 		while (script.getMenuAPI().isOpen()) {
 			Script.sleep(rn.nextInt(100000) % 100);
 			script.getMouse().moveRandomly();
@@ -378,11 +378,6 @@ public class Fighting {
 	public void removeSpuriousRightClicks() throws InterruptedException {
 		if (script.getMenuAPI().isOpen() && rightClicked != null && !rightClicked.isUnderAttack()) {
 			List<Option> menu = script.getMenuAPI().getMenu();
-			if (menu != null && current != null && menu.get(0).name.contains(current.getName())) {
-				removeMenu();
-				rightClicked = null;
-				return;
-			}
 			for (Option o : menu) {
 				if (o.action.contains("Attack")) {
 					for (String s : monsterNames) {

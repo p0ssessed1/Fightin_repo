@@ -6,9 +6,9 @@ import java.util.Random;
 import org.osbot.rs07.script.Script;
 
 import antiban.Antiban;
-import eatingThread.Eater;
+import eater.Eater;
 import fighting.Fighting;
-import groundItemManager.GroundItemManager;
+import itemManager.ItemManager;
 import main.ThreadHandler;
 
 public class OverWatch implements Runnable {
@@ -17,7 +17,7 @@ public class OverWatch implements Runnable {
 	Antiban antiban;
 	Eater eater;
 	ThreadHandler threadHandler;
-	GroundItemManager itemManager;
+	ItemManager itemManager;
 
 	final long eatingTime = 10000;
 	final long attackingTime = 15000;
@@ -31,10 +31,10 @@ public class OverWatch implements Runnable {
 	long timeStamp = 0;
 
 	public enum mouseState {
-		Eating, PickingUp, Attacking, Walking, AntiBan, None, NoChange
+		INVINTERACTION, PICKINGUP, ATTACKING, WALKING, ANTIBAN, NONE, NOCHANGE
 	};
 
-	public OverWatch(Script script, Fighting fighter, Antiban antiban, Eater eater, GroundItemManager itemManager) {
+	public OverWatch(Script script, Fighting fighter, Antiban antiban, Eater eater, ItemManager itemManager) {
 		this.script = script;
 		this.fighter = fighter;
 		this.antiban = antiban;
@@ -49,14 +49,14 @@ public class OverWatch implements Runnable {
 	}
 
 	public void setState(mouseState state) {
-		if (state != mouseState.NoChange) {
+		if (state != mouseState.NOCHANGE) {
 			timeStamp = System.currentTimeMillis();
 			this.state = state;
 		}
 	}
 
 	public void resetState() {
-		state = mouseState.None;
+		state = mouseState.NONE;
 	}
 
 	private long timeHeld() {
@@ -116,7 +116,7 @@ public class OverWatch implements Runnable {
 			}
 
 			switch (state) {
-			case Eating:
+			case INVINTERACTION:
 				loggoutCount = 0;
 				if (timeHeld() > eatingTime) {
 					if (!isMouseMoving()) {
@@ -127,7 +127,7 @@ public class OverWatch implements Runnable {
 					}
 				}
 				break;
-			case Attacking:
+			case ATTACKING:
 				loggoutCount = 0;
 				if (timeHeld() > attackingTime) {
 					threadHandler.logPrint(threadName,"Attacking over time.");
@@ -140,7 +140,7 @@ public class OverWatch implements Runnable {
 					}
 				}
 				break;
-			case PickingUp:
+			case PICKINGUP:
 				loggoutCount = 0;
 				if (timeHeld() > pickingUpTime) {
 					if (!isMouseMoving()) {
@@ -151,7 +151,7 @@ public class OverWatch implements Runnable {
 					}
 				}
 				break;
-			case AntiBan:
+			case ANTIBAN:
 				loggoutCount = 0;
 				if (timeHeld() > antiBanTime) {
 					if (!isMouseMoving()) {
@@ -162,7 +162,7 @@ public class OverWatch implements Runnable {
 					}
 				}
 				break;
-			case Walking:
+			case WALKING:
 				loggoutCount = 0;
 				try {
 					Thread.sleep(rn.nextInt(500) + 500);
@@ -180,7 +180,7 @@ public class OverWatch implements Runnable {
 					}
 				}
 				break;
-			case None:
+			case NONE:
 				break;
 			default:
 				threadHandler.logPrint(threadName, "Have an Invalid state here. State: " + state);

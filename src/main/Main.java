@@ -13,10 +13,10 @@ import org.osbot.rs07.script.ScriptManifest;
 
 import antiban.Antiban;
 import banking.Banking;
-import eatingThread.Eater;
+import eater.Eater;
 import fighting.Fighting;
-import groundItemManager.GroundItemManager;
-import groundItemManager.GroundItemManager.pickupRC;
+import itemManager.ItemManager;
+import itemManager.ItemManager.pickupRC;
 import logger.Logger;
 import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
@@ -25,16 +25,16 @@ import simpleGui.SimpleGui;
 @ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.8", version = .8, logo = "")
 public class Main extends Script {
 	final int UP_KEY = 38;
-	
+
 	Banking bank;
 	Fighting fighter;
 	Antiban antiban;
 	Eater eater;
-	GroundItemManager itemManager;
+	ItemManager itemManager;
 	ThreadHandler threadHandler;
 	OverWatch overWatch;
 	Logger logger;
-	
+
 	final String threadName = "Main";
 
 	long timeStart;
@@ -46,10 +46,12 @@ public class Main extends Script {
 	int startHpXp;
 	int startPrayerLvl;
 	int startPrayerXp;
+	int startRangeLvl;
+	int startRangeXp;
 	Timer t;
-	
+
 	int pickupCount = 0;
-	
+
 	@Override
 	public void onStart() throws InterruptedException {
 		bank = new Banking(this);
@@ -60,7 +62,7 @@ public class Main extends Script {
 		log("Initialized antiban");
 		eater = new Eater(this, fighter);
 		log("Initialized eating");
-		itemManager = new GroundItemManager(this, bank, fighter);
+		itemManager = new ItemManager(this, bank, fighter);
 		log("Initialized ground item manager");
 		logger = new Logger();
 		log("Initialized File Writer.");
@@ -72,10 +74,10 @@ public class Main extends Script {
 		itemManager.setThreadHandler(threadHandler);
 		logger.setThreadHandler(threadHandler);
 		log("Initialized ThreadHandler");
-		overWatch = new OverWatch(this,fighter,antiban,eater, itemManager);
+		overWatch = new OverWatch(this, fighter, antiban, eater, itemManager);
 		overWatch.setThreadHandler(threadHandler);
-		overWatch.setState(mouseState.None);
-		
+		overWatch.setState(mouseState.NONE);
+
 		eater.setOverWatch(overWatch);
 		fighter.setOverWatch(overWatch);
 		antiban.setOverWatch(overWatch);
@@ -83,7 +85,7 @@ public class Main extends Script {
 		itemManager.setOverWatch(overWatch);
 
 		antiban.setItemManager(itemManager);
-		
+
 		getKeyboard().initializeModule();
 		getCamera().initializeModule();
 		getInventory().initializeModule();
@@ -91,6 +93,8 @@ public class Main extends Script {
 		getMouse().initializeModule();
 
 		timeStart = System.currentTimeMillis();
+		startRangeLvl = getExperienceTracker().getGainedLevels(Skill.RANGED);
+		startRangeXp = getExperienceTracker().getGainedXP(Skill.RANGED);
 		startPrayerLvl = getExperienceTracker().getGainedLevels(Skill.PRAYER);
 		startPrayerXp = getExperienceTracker().getGainedXP(Skill.PRAYER);
 		startStrengthLvl = getExperienceTracker().getGainedLevels(Skill.STRENGTH);
@@ -105,7 +109,7 @@ public class Main extends Script {
 		gui.Setup();
 		log("Setup Gui");
 		gui.Display();
-		
+
 		t = new Timer();
 	}
 
@@ -123,11 +127,11 @@ public class Main extends Script {
 		if (!threadHandler.isSettup()) {
 			threadHandler.settup();
 		}
-		
+
 		banking();
 		fighting();
 		fighter.removeSpuriousRightClicks();
-		
+
 		if (random(0, 1) == 0) {
 			if (getSettings().getRunEnergy() > random(15, 40)) {
 				if (!getSettings().isRunning()) {
@@ -135,25 +139,26 @@ public class Main extends Script {
 				}
 			}
 		}
-		
-		if(random(0,1) == 0){
+
+		if (random(0, 1) == 0) {
 			antiban.moveCamera();
-		} else if(getCamera().getPitchAngle() < random(58,60)){
+		} else if (getCamera().getPitchAngle() < random(58, 60)) {
 			t.reset();
 			getKeyboard().pressKey(UP_KEY);
-			int endAngle = random(63,67);
-			while(getCamera().getPitchAngle() < endAngle && t.timer(random(1500,2500))){
-				sleep(random(20,50));
+			int endAngle = random(63, 67);
+			while (getCamera().getPitchAngle() < endAngle && t.timer(random(1500, 2500))) {
+				sleep(random(20, 50));
 			}
 			getKeyboard().releaseKey(UP_KEY);
 		}
-		
 
 		return 0;
 	}
 
-	public void banking() throws InterruptedException{
-		if (!fighter.hasFood()) {
+	public void banking() throws InterruptedException {
+		int hpThreshold = random(50,65);
+		if (!fighter.hasFood() && (getSkills().getDynamic(Skill.HITPOINTS)* 100)/getSkills().getStatic(Skill.HITPOINTS) < hpThreshold){
+			itemManager.equipArrows();
 			if (bank.bank()) {
 				threadHandler.logPrint(threadName, "Banking Succesful");
 				log("Banking Succesful");
@@ -175,11 +180,11 @@ public class Main extends Script {
 			}
 		}
 	}
-	
-	public void fighting() throws InterruptedException{
+
+	public void fighting() throws InterruptedException {
 		if (!fighter.isFighting()) {
-			if(random(0,4) == 0 || pickupCount > random(4,7) || itemManager.priorityPickup){
-				if(pickupRC.RC_FAIL == itemManager.pickupItems()){
+			if (random(0, 4) == 0 || pickupCount > random(4, 7) || itemManager.priorityPickup) {
+				if (pickupRC.RC_FAIL == itemManager.pickupItems()) {
 					return;
 				}
 				pickupCount = 0;
@@ -214,7 +219,7 @@ public class Main extends Script {
 			sleep(random(500, 700));
 		}
 	}
-	
+
 	@Override
 	public void onMessage(Message message) throws InterruptedException {
 		threadHandler.logPrint(threadName, "onMessage: " + message.getMessage());
@@ -223,13 +228,24 @@ public class Main extends Script {
 			died();
 		} else if (message.getMessage().contains("already under")) {
 			alreadyUnderAttack();
+		} else if (message.getMessage().contains("no ammo")) {
+			if (itemManager.equipArrows()) {
+				t.reset();
+				int timeout = random(800, 1000);
+				while (t.timer(timeout) && !itemManager.arrowsEquipped()) {
+					sleep(random(20, 50));
+				}
+				if (!t.timer(timeout)) {
+					stop();
+				}
+			}
 		}
 	}
 
 	private void alreadyUnderAttack() throws InterruptedException {
-//		if (!fighter.attackAttacker()) {
-			Thread.sleep(random(2000, 4000) + 2000);
-//		}
+		// if (!fighter.attackAttacker()) {
+		Thread.sleep(random(2000, 4000) + 2000);
+		// }
 	}
 
 	private void died() throws InterruptedException {
@@ -258,17 +274,22 @@ public class Main extends Script {
 		g.drawString("Time Running: " + (hours >= 10 ? "" + hours : "0" + hours) + ":"
 				+ (minutes >= 10 ? "" + minutes : "0" + minutes) + ":" + (seconds >= 10 ? "" + seconds : "0" + seconds),
 				8, 50);
-		g.drawString("Strength XP: " + (getExperienceTracker().getGainedXP(Skill.STRENGTH) - startStrengthXp) + " ("
-				+ (getExperienceTracker().getGainedLevels(Skill.STRENGTH) - startStrengthLvl) + ")", 8, 65);
-		g.drawString("Attack XP: " + (getExperienceTracker().getGainedXP(Skill.ATTACK) - startAttackXp) + " ("
-				+ (getExperienceTracker().getGainedLevels(Skill.ATTACK) - startAttackLvl) + ")", 8, 80);
+		if (itemManager.getRange()) {
+			g.drawString("Ranged XP: " + (getExperienceTracker().getGainedXP(Skill.RANGED) - startRangeXp) + " ("
+					+ (getExperienceTracker().getGainedLevels(Skill.RANGED) - startRangeLvl) + ")", 8, 80);
+		} else {
+			g.drawString("Strength XP: " + (getExperienceTracker().getGainedXP(Skill.STRENGTH) - startStrengthXp) + " ("
+					+ (getExperienceTracker().getGainedLevels(Skill.STRENGTH) - startStrengthLvl) + ")", 8, 65);
+			g.drawString("Attack XP: " + (getExperienceTracker().getGainedXP(Skill.ATTACK) - startAttackXp) + " ("
+					+ (getExperienceTracker().getGainedLevels(Skill.ATTACK) - startAttackLvl) + ")", 8, 80);
+		}
 		g.drawString("Hitpoints XP: " + (getExperienceTracker().getGainedXP(Skill.HITPOINTS) - startHpXp) + " ("
 				+ (getExperienceTracker().getGainedLevels(Skill.HITPOINTS) - startHpLvl) + ")", 8, 95);
-		if(itemManager.getBurying()){
+		if (itemManager.getBurying()) {
 			g.drawString("Prayer XP: " + (getExperienceTracker().getGainedXP(Skill.PRAYER) - startPrayerXp) + " ("
 					+ (getExperienceTracker().getGainedLevels(Skill.PRAYER) - startPrayerLvl) + ")", 8, 110);
 		}
-		
+
 	}
 
 	@Override

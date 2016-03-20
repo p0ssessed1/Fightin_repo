@@ -9,7 +9,7 @@ import org.osbot.rs07.input.mouse.EntityDestination;
 import org.osbot.rs07.script.Script;
 
 import fighting.Fighting;
-import groundItemManager.GroundItemManager;
+import itemManager.ItemManager;
 import main.ThreadHandler;
 import main.Timer;
 import overWatch.OverWatch;
@@ -37,10 +37,10 @@ public class Antiban implements Runnable {
 
 	Timer t = new Timer();
 	OverWatch overWatch;
-	GroundItemManager itemManager;
+	ItemManager itemManager;
 
 	
-	public void setItemManager(GroundItemManager itemManager){
+	public void setItemManager(ItemManager itemManager){
 		this.itemManager = itemManager;
 	}
 	public void setOverWatch(OverWatch overWatch){
@@ -191,7 +191,7 @@ public class Antiban implements Runnable {
 		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Thread.sleep(rn.nextInt(100) + 100);
 		}
-		overWatch.setState(mouseState.AntiBan);
+		overWatch.setState(mouseState.ANTIBAN);
 		boolean ret = script.getTabs().open(tab);
 		releaseMouseOwned();
 		return ret;
@@ -306,7 +306,7 @@ public class Antiban implements Runnable {
 		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}
-		overWatch.setState(mouseState.AntiBan);
+		overWatch.setState(mouseState.ANTIBAN);
 		state = State.MouseMoved;
 		switch (rn.nextInt(10)) {
 		case 0:
@@ -406,7 +406,7 @@ public class Antiban implements Runnable {
 				while (!(mouseOwned = threadHandler.ownMouse())) {
 					Thread.sleep(rn.nextInt(100) + 100);
 				}
-				overWatch.setState(mouseState.AntiBan);
+				overWatch.setState(mouseState.ANTIBAN);
 				script.getMouse().click(targetDest, true);
 				releaseMouseOwned();
 				t.reset();
@@ -422,7 +422,7 @@ public class Antiban implements Runnable {
 					while (!(mouseOwned = threadHandler.ownMouse())) {
 						Thread.sleep(rn.nextInt(100) + 100);
 					}
-					overWatch.setState(mouseState.AntiBan);
+					overWatch.setState(mouseState.ANTIBAN);
 					script.getMouse().click(targetDest, true);
 					releaseMouseOwned();
 					t.reset();
@@ -444,12 +444,12 @@ public class Antiban implements Runnable {
 			return false;
 		}
 		boolean ret = false;
-		Skill[] skillArray = { Skill.STRENGTH, Skill.HITPOINTS, Skill.PRAYER };
+		Skill[] skillArray = { Skill.HITPOINTS, Skill.PRAYER, (itemManager.getRange() ? Skill.RANGED : Skill.STRENGTH) };
 		Skill skill = skillArray[rn.nextInt(skillArray.length - 1)];
 		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Thread.sleep(rn.nextInt(100) + 100);
 		}
-		overWatch.setState(mouseState.AntiBan);
+		overWatch.setState(mouseState.ANTIBAN);
 		if (script.getSkills().hoverSkill(skill)) {
 			Thread.sleep(rn.nextInt(300) + 700);
 			state = State.HoverSkill;

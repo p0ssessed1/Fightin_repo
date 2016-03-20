@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.osbot.rs07.script.Script;
 
 import antiban.Antiban;
-import eatingThread.Eater;
-import groundItemManager.GroundItemManager;
+import eater.Eater;
+import itemManager.ItemManager;
 import logger.Logger;
 import overWatch.OverWatch;
 
@@ -36,7 +36,7 @@ public class ThreadHandler{
 	Logger logger;
 	Antiban antiban;
 	Eater eater;
-	GroundItemManager itemManager;
+	ItemManager itemManager;
 	Script script;
 	Random rn;
 	FileWriter Efile;
@@ -52,7 +52,7 @@ public class ThreadHandler{
 	AtomicBoolean writeExceptionFlag = new AtomicBoolean(true);
 	OverWatch overWatch;
 
-	public ThreadHandler(Script script, Antiban antiban, Eater eater, GroundItemManager itemManager, Logger logger) {
+	public ThreadHandler(Script script, Antiban antiban, Eater eater, ItemManager itemManager, Logger logger) {
 		this.logger = logger;
 		this.logQueue = new LinkedBlockingQueue<String>();
 		this.script = script;
