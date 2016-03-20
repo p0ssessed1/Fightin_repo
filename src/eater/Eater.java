@@ -1,4 +1,4 @@
-package eatingThread;
+package eater;
 
 import java.util.Random;
 
@@ -20,7 +20,7 @@ public class Eater implements Runnable {
 	Fighting fighter;
 	Timer t = new Timer();
 	int minHP = 10;
-	int HP_BUFFER = 7;
+	int hpBuffer = 7;
 	volatile boolean mouseOwned = false;
 	ThreadHandler threadHandler;
 	OverWatch overWatch;
@@ -28,8 +28,8 @@ public class Eater implements Runnable {
 	public void setThreadHandler(ThreadHandler threadHandler) {
 		this.threadHandler = threadHandler;
 	}
-	
-	public void setOverWatch(OverWatch overWatch){
+
+	public void setOverWatch(OverWatch overWatch) {
 		this.overWatch = overWatch;
 	}
 
@@ -53,6 +53,12 @@ public class Eater implements Runnable {
 		if (food != null) {
 			boolean wasMoving = script.myPlayer().isMoving();
 			ret = food.interact("Eat");
+			int hpThreshold = rn.nextInt(10) + 75;
+			while (((script.getSkills().getDynamic(Skill.HITPOINTS) * 100)
+					/ script.getSkills().getStatic(Skill.HITPOINTS)) < hpThreshold) {
+				Thread.sleep(rn.nextInt(550) + 450);
+				food.interact("Eat");
+			}
 			if (wasMoving) {
 				Thread.sleep(rn.nextInt(900) + 300);
 				if (fighter.getCurrent() != null && fighter.getCurrent().exists()) {
@@ -62,7 +68,7 @@ public class Eater implements Runnable {
 				}
 			} else if (fighter.getCurrent() != null && fighter.getCurrent().isVisible()) {
 				if (rn.nextInt(10) < 8) {
-					if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(HP_BUFFER))
+					if (script.getSkills().getDynamic(Skill.HITPOINTS) > (minHP + rn.nextInt(hpBuffer))
 							&& fighter.getCurrent() != null && fighter.getCurrent().getCurrentHealth() > 1) {
 						Thread.sleep(rn.nextInt(900) + 900);
 						fighter.getCurrent().interact("Attack");
@@ -73,16 +79,16 @@ public class Eater implements Runnable {
 		return ret;
 	}
 
-	private void releaseMouseOwned(){
-		if(mouseOwned){
+	private void releaseMouseOwned() {
+		if (mouseOwned) {
 			mouseOwned = threadHandler.releaseMouse();
 		}
 	}
-	
-	public void resetMouseOwned(){
+
+	public void resetMouseOwned() {
 		this.mouseOwned = false;
 	}
-	
+
 	@Override
 	public void run() {
 		synchronized (fighter) {
@@ -95,7 +101,7 @@ public class Eater implements Runnable {
 					e.printStackTrace();
 					threadHandler.exceptionPrint(threadName, e);
 				}
-				while(!script.client.isLoggedIn()) {
+				while (!script.client.isLoggedIn()) {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -109,12 +115,12 @@ public class Eater implements Runnable {
 					e.printStackTrace();
 					threadHandler.exceptionPrint(threadName, e);
 				}
-				if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(HP_BUFFER))) {
+				if (script.getSkills().getDynamic(Skill.HITPOINTS) < (minHP + rn.nextInt(hpBuffer))) {
 					try {
 						while (!(mouseOwned = threadHandler.ownMouse())) {
 							Thread.sleep(rn.nextInt(300) + 300);
 						}
-						overWatch.setState(mouseState.Eating);
+						overWatch.setState(mouseState.INVINTERACTION);
 						tryEat();
 						releaseMouseOwned();
 					} catch (Exception e) {
@@ -125,7 +131,7 @@ public class Eater implements Runnable {
 					}
 				}
 			}
-			
+
 		}
 	}
 }
