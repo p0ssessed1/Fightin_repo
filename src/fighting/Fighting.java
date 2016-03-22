@@ -16,6 +16,7 @@ import dynamicArea.DynamicArea;
 import main.Timer;
 import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
+import utils.Utils;
 import main.ThreadHandler;
 
 public class Fighting {
@@ -28,6 +29,7 @@ public class Fighting {
 	volatile NPC current;
 	NameFilter<Item> foodItem;
 	ThreadHandler threadHandler;
+	Utils utils;
 	volatile boolean mouseOwned = false;
 
 	List<Area> fightingAreas = new LinkedList<Area>();
@@ -60,13 +62,16 @@ public class Fighting {
 		return foodItem;
 	}
 
+	public void setUtils(Utils utils) {
+		this.utils = utils;
+	}
+
 	public Fighting(Script script) {
 		this.script = script;
 		this.dynamicArea = new DynamicArea(this);
 		rn = new Random(script.myPlayer().getId());
 		fightingAreas = dynamicArea.CreateAreas(script.getNpcs().getAll());
 		if (fightingAreas.isEmpty()) {
-
 			threadHandler.logPrint(threadName, "No fighting areas retrieved.");
 			script.log("No fighting areas retrieved.");
 			script.stop(false);
@@ -88,7 +93,7 @@ public class Fighting {
 						&& current.getCurrentHealth() > 0) || script.getCombat().isFighting()) {
 					return true;
 				} else if (i == 14) {
-					//current = null;
+					// current = null;
 					return false;
 				}
 			} catch (Exception e) {
@@ -144,8 +149,6 @@ public class Fighting {
 			return true;
 		}
 		NPC monster;
-		@SuppressWarnings("unused")
-		boolean notTimedOut = false;
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 30000;
 		dynamicArea.addExclusiveAreas(script.getNpcs().getAll(), fightingAreas, monsterFilter);
 		if (rn.nextInt(5) < 2) {
@@ -269,57 +272,38 @@ public class Fighting {
 
 	private boolean attackDelay(int timeoutVal) throws InterruptedException {
 		boolean animated = false;
-		@SuppressWarnings("unused")
-		boolean notTimedOut = false;
 		t.reset();
 		while (script.myPlayer().isMoving() && t.timer(rn.nextInt(3000) + timeoutVal)) {
 			Script.sleep(100);
 		}
 		t.reset();
-		while (!(animated = script.myPlayer().isAnimating()) && (notTimedOut = t.timer(rn.nextInt(500) + 5000))) {
+		while (!(animated = script.myPlayer().isAnimating()) && t.timer(rn.nextInt(500) + 5000)) {
 			Script.sleep(rn.nextInt(400) + 200);
 		}
 		return animated;
 	}
 
-	@SuppressWarnings("unchecked")
 	public boolean clickNextMonster() throws InterruptedException {
 		boolean animated = false;
-		if (rightClicked == null || current == rightClicked) {
-			removeMenu();
-			current = null;
-			rightClicked = null;
-			return false;
-		}
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 30000;
-		if (script.getMenuAPI().isOpen() && rightClicked != null && !rightClicked.isUnderAttack()
-				&& script.getMenuAPI().selectAction(action)) {
-			animated = attackDelay(timeoutVal);
-			if (animated) {
-				current = rightClicked;
-			} else {
-				current = null;
-			}
-		} else {
-			if (rn.nextInt(1000) % 10 > 5) {
-				rightClicked = script.getNpcs().closest(true, n -> actionFilter.match(n) && monsterFilter.match(n)
-						&& !(n.isUnderAttack() || n.isAnimating()));
-				criticalAttack(rightClicked);
+		if (rightClicked != null){
+			if (utils.selectMenuOption("Attack", rightClicked.getName())) {
 				animated = attackDelay(timeoutVal);
-
 				if (animated) {
-					threadHandler.logPrint(threadName, "Attacking: " + rightClicked != null ? rightClicked.getName() : null);
+					threadHandler.logPrint(threadName,
+							"Attacking: " + rightClicked != null ? rightClicked.getName() : null);
 					script.log("Attacking: " + rightClicked != null ? rightClicked.getName() : null);
 					current = rightClicked;
 				} else {
 					current = null;
 				}
-			} else {
-				threadHandler.logPrint(threadName, "Removing Menu");
-				script.log("Removing menu.");
-				removeMenu();
 			}
+		} else {
+			threadHandler.logPrint(threadName, "Removing Menu");
+			script.log("Removing menu.");
+			removeMenu();
 		}
+
 		rightClicked = null;
 		return animated;
 	}
@@ -361,7 +345,7 @@ public class Fighting {
 		return false;
 	}
 
-	private void removeMenu() throws InterruptedException {
+	public void removeMenu() throws InterruptedException {
 		while (!(mouseOwned = threadHandler.ownMouse())) {
 			Script.sleep(rn.nextInt(100) + 100);
 		}

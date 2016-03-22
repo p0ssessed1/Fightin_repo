@@ -24,6 +24,7 @@ public class OverWatch implements Runnable {
 	private static final long pickingUpTime = 15000;
 	private static final long antiBanTime = 5000;
 	private static final long settingsTime = 3000;
+	private static final long utilsTime = 15000;
 	final String threadName = "overWatch";
 
 	int loggoutCount = 0;
@@ -32,7 +33,7 @@ public class OverWatch implements Runnable {
 	long timeStamp = 0;
 
 	public enum mouseState {
-		INVINTERACTION, PICKINGUP, ATTACKING, WALKING, ANTIBAN, SETTINGS, NONE, NOCHANGE
+		INVINTERACTION, PICKINGUP, ATTACKING, WALKING, ANTIBAN, SETTINGS, UTILS, NONE, NOCHANGE
 	};
 
 	public OverWatch(Script script, Fighting fighter, Antiban antiban, Eater eater, ItemManager itemManager) {
@@ -210,11 +211,24 @@ public class OverWatch implements Runnable {
 							threadHandler.logPrint(threadName,
 									"OverWatch released mouse after " + state + " Takeover.");
 							script.log("OverWatch released mouse after " + state + " Takeover.");
-							antiban.resetMouseOwned();
 							threadHandler.releaseMouse();
 						}
 					}
 				}
+				break;
+			case UTILS: 
+			loggoutCount = 0;
+			localstate = state;
+			if (timeHeld() > utilsTime) {
+				if (!isMouseMoving()) {
+					if (state == localstate) {
+						threadHandler.logPrint(threadName,
+								"OverWatch released mouse after " + state + " Takeover.");
+						script.log("OverWatch released mouse after " + state + " Takeover.");
+						threadHandler.releaseMouse();
+					}
+				}
+			}
 				break;
 			case NONE:
 				localstate = state;

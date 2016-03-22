@@ -67,7 +67,7 @@ public class Antiban implements Runnable {
 		if (fighter.isFighting()) {
 			switch (rn.nextInt(30)) {
 			case 0:
-				Script.sleep(rn.nextInt(900) + 1200);
+				Thread.sleep(rn.nextInt(900) + 1200);
 			case 1:
 				/* Move Mouse */
 				threadHandler.logPrint(threadName, "Antiban: Move Mouse.");
@@ -92,7 +92,7 @@ public class Antiban implements Runnable {
 				moveCamera();
 				break;
 			case 6:
-				Script.sleep(rn.nextInt(900) + 400);
+				Thread.sleep(rn.nextInt(900) + 400);
 				break;
 			case 7:
 				/* Sleep until 1s after done fishing. */
@@ -125,7 +125,7 @@ public class Antiban implements Runnable {
 				threadHandler.logPrint(threadName,"Antiban: Right Click medium sleep.");
 				script.log("Antiban: Right Click medium sleep.");
 				rightClickNext();
-				Script.sleep(rn.nextInt(500) + 900);
+				Thread.sleep(rn.nextInt(500) + 900);
 				break;
 			case 11:
 				/* Right Click Hover */
@@ -304,7 +304,7 @@ public class Antiban implements Runnable {
 		}
 		boolean ret = false;
 		while (!(mouseOwned = threadHandler.ownMouse())) {
-			Script.sleep(rn.nextInt(100) + 100);
+			Thread.sleep(rn.nextInt(100) + 100);
 		}
 		overWatch.setState(mouseState.ANTIBAN);
 		state = State.MouseMoved;
@@ -400,12 +400,11 @@ public class Antiban implements Runnable {
 		}
 		if(!script.getMenuAPI().isOpen()){
 			NPC next = fighter.getNextMonster();
-			if (next != null && next.isVisible()) {
-				EntityDestination targetDest = new EntityDestination(script.getBot(), next);
-	
+			if (next != null && next.isVisible()) {	
 				while (!(mouseOwned = threadHandler.ownMouse())) {
 					Thread.sleep(rn.nextInt(100) + 100);
 				}
+				EntityDestination targetDest = new EntityDestination(script.getBot(), next);
 				overWatch.setState(mouseState.ANTIBAN);
 				script.getMouse().click(targetDest, true);
 				releaseMouseOwned();
@@ -413,15 +412,14 @@ public class Antiban implements Runnable {
 				while (!script.getMenuAPI().isOpen() && t.timer(rn.nextInt(1000) + 150)) {
 					Thread.sleep(50);
 				}
-				Script.sleep(rn.nextInt(500) + 400);
+				Thread.sleep(rn.nextInt(500) + 400);
 			} else if (next != null) {
 				script.getCamera().toEntity(next);
-				if (next.isVisible()) {
-					EntityDestination targetDest = new EntityDestination(script.getBot(), next);
-	
+				if (next.isVisible()) {	
 					while (!(mouseOwned = threadHandler.ownMouse())) {
 						Thread.sleep(rn.nextInt(100) + 100);
 					}
+					EntityDestination targetDest = new EntityDestination(script.getBot(), next);
 					overWatch.setState(mouseState.ANTIBAN);
 					script.getMouse().click(targetDest, true);
 					releaseMouseOwned();

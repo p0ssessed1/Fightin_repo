@@ -6,11 +6,13 @@ import java.util.Random;
 
 import org.osbot.rs07.api.filter.Filter;
 import org.osbot.rs07.api.filter.NameFilter;
+import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.GroundItem;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.model.NPC;
 import org.osbot.rs07.api.ui.EquipmentSlot;
 import org.osbot.rs07.api.ui.Skill;
+import org.osbot.rs07.input.mouse.EntityDestination;
 import org.osbot.rs07.script.Script;
 
 import banking.Banking;
@@ -20,6 +22,7 @@ import main.ThreadHandler;
 import main.Timer;
 import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
+import utils.Utils;
 
 @SuppressWarnings("unchecked")
 public class ItemManager {
@@ -30,6 +33,7 @@ public class ItemManager {
 	Banking banker;
 	Fighting fighter;
 	DynamicArea dynamicArea;
+	Utils utils;
 
 	String threadName = "Item Manager";
 	Timer t = new Timer();
@@ -65,6 +69,10 @@ public class ItemManager {
 
 	public void setThreadHandler(ThreadHandler threadHandler) {
 		this.threadHandler = threadHandler;
+	}
+	
+	public void setUtils(Utils utils){
+		this.utils = utils;
 	}
 
 	public void setItemFilter(String[] items) {
@@ -217,6 +225,29 @@ public class ItemManager {
 		return ret;
 	}
 
+	private GroundItem closestItemTo(GroundItem item) {
+		GroundItem secondClosest = null;
+		Position itemPosition = item.getPosition();
+		int minDistance = 0;
+		List<GroundItem> allItems = script.getGroundItems().getAll();
+		List<GroundItem> filteredItems = new LinkedList<GroundItem>();
+		for (GroundItem gi : allItems) {
+			if (itemFilter.match(gi) && item != gi) {
+				filteredItems.add(gi);
+				minDistance = itemPosition.distance(gi.getPosition());
+			}
+		}
+
+		for (GroundItem gi : filteredItems) {
+			if (itemPosition.distance(gi.getPosition()) < minDistance) {
+				secondClosest = gi;
+				minDistance = itemPosition.distance(gi.getPosition());
+			}
+		}
+
+		return secondClosest;
+	}
+
 	public pickupRC pickupItems() throws InterruptedException {
 		NPC dieing = fighter.getCurrent();
 		fighter.reset();
@@ -227,7 +258,7 @@ public class ItemManager {
 		}
 		script.log("Picking up items.");
 		threadHandler.logPrint(threadName, "Picking up:");
-		GroundItem item;
+		GroundItem item = null;
 		int timeoutVal = script.getSettings().isRunning() ? 10000 : 25000;
 		int animatingTimeout = rn.nextInt(700) + 950;
 		int itemTimeout = rn.nextInt(400) + 400;
@@ -242,14 +273,17 @@ public class ItemManager {
 			 * killed.
 			 */
 			while (dieing != null
-					&& !script.getGroundItems().get(dieing.getPosition().getX(), dieing.getPosition().getY()).isEmpty()
+					&& script.getGroundItems().get(dieing.getPosition().getX(), dieing.getPosition().getY()).isEmpty()
 					&& t.timer(itemTimeout)) {
 				Script.sleep(50);
 			}
 		}
 		Script.sleep(rn.nextInt(100) + 100);
-		while ((item = script.getGroundItems().closest(true, gi -> itemFilter.match(gi) && isGroundItemValid(gi)
-				&& dynamicArea.getOverallArea().contains(gi))) != null) {
+		GroundItem nextItem = null;
+		while ((nextItem != null ? (item = nextItem)
+				: (item = script.getGroundItems().closest(true, gi -> itemFilter.match(gi) && isGroundItemValid(gi)
+						&& dynamicArea.getOverallArea().contains(gi)))) != null) {
+			nextItem = closestItemTo(item);
 			threadHandler.logPrint(threadName, "Picking up: " + item.getName());
 			if (script.getInventory().isFull()) {
 				if (!eatIfLow()) {
@@ -259,12 +293,16 @@ public class ItemManager {
 			if (!item.isVisible() && rn.nextInt(1000) > rn.nextInt(300) + 200) {
 				walkToItem(item);
 			}
-			criticalPickup(item);
-			Script.sleep(rn.nextInt(500) + 600);
+
+			if (clickingItem(item, nextItem)) {
+				ret = pickupRC.RC_OK;
+			}
+
+			Thread.sleep(rn.nextInt(600) + 700);
 			t.reset();
 			while (!(animated = script.myPlayer().isAnimating()) && script.myPlayer().isMoving()
 					&& t.timer(rn.nextInt(2500) + timeoutVal)) {
-				Thread.sleep(rn.nextInt(100) + 100);
+				Thread.sleep(rn.nextInt(100) + 10);
 			}
 			if (animated) {
 				/* Means I miss-clicked and am attacking. */
@@ -272,8 +310,6 @@ public class ItemManager {
 				Script.sleep(rn.nextInt(1000) + 5000);
 				return pickupRC.RC_FAIL;
 			}
-			ret = pickupRC.RC_OK;
-			Script.sleep(rn.nextInt(150) + 50);
 		}
 
 		boneBurryier();
@@ -282,6 +318,29 @@ public class ItemManager {
 		}
 
 		return ret;
+	}
+
+	private boolean clickingItem(GroundItem currentItem, GroundItem nextItem) throws InterruptedException {
+		boolean pickedUp = false;
+		if (!utils.selectMenuOption("Take",currentItem.getName())) {
+			pickedUp = criticalPickup(currentItem);
+		} 
+
+		Thread.sleep(rn.nextInt(200) + 100);
+		if (nextItem != null) {
+			if (rn.nextInt(100) > (rn.nextInt(20) + 10) &&
+					((currentItem.getPosition().getX() != nextItem.getPosition().getX()) &&
+					nextItem.getPosition().getY() != currentItem.getPosition().getY())) {
+				while (!(mouseOwned = threadHandler.ownMouse())) {
+					Thread.sleep(rn.nextInt(50) + 10);
+				}
+				overWatch.setState(mouseState.PICKINGUP);
+				EntityDestination targetDest = new EntityDestination(script.getBot(), nextItem);
+				script.getMouse().click(targetDest, true);
+				releaseMouseOwned();
+			}
+		}
+		return pickedUp;
 	}
 
 	private void releaseMouseOwned() {

@@ -71,13 +71,13 @@ public class Eater implements Runnable {
 			int hpThreshold = rn.nextInt(10) + 75;
 			while (((script.getSkills().getDynamic(Skill.HITPOINTS) * 100)
 					/ script.getSkills().getStatic(Skill.HITPOINTS)) < hpThreshold) {
-				Thread.sleep(rn.nextInt(550) + 450);
 				food = script.getInventory().getItem(eat);
 				if(food != null) {
 					criticalEat(food);
 				} else {
 					break;
 				}
+				Thread.sleep(rn.nextInt(550) + 450);
 			}
 			if (wasMoving) {
 				Thread.sleep(rn.nextInt(900) + 300);
@@ -146,7 +146,6 @@ public class Eater implements Runnable {
 					}
 				}
 			}
-
 		}
 	}
 }

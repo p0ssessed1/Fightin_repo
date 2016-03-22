@@ -23,6 +23,7 @@ import logger.Logger;
 import overWatch.OverWatch;
 import overWatch.OverWatch.mouseState;
 import simpleGui.SimpleGui;
+import utils.Utils;
 
 @ScriptManifest(author = "EmbeddedJ", info = "Dynamic fighter", name = "Beta Dynamic fighter v0.9", version = .9, logo = "")
 public class Main extends Script {
@@ -36,6 +37,7 @@ public class Main extends Script {
 	ThreadHandler threadHandler;
 	OverWatch overWatch;
 	Logger logger;
+	Utils utils;
 
 	final String threadName = "Main";
 
@@ -81,7 +83,10 @@ public class Main extends Script {
 		overWatch = new OverWatch(this, fighter, antiban, eater, itemManager);
 		overWatch.setThreadHandler(threadHandler);
 		overWatch.setState(mouseState.NONE);
-
+		utils = new Utils(this,threadHandler,overWatch);
+		fighter.setUtils(utils);
+		itemManager.setUtils(utils);
+		
 		eater.setOverWatch(overWatch);
 		fighter.setOverWatch(overWatch);
 		antiban.setOverWatch(overWatch);

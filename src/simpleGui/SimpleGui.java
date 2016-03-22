@@ -1,8 +1,10 @@
 package simpleGui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Label;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -261,10 +263,14 @@ public class SimpleGui implements ActionListener {
 	 * @throws InterruptedException
 	 */
 	public boolean Display() throws InterruptedException {
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		int centerWidth = (int)screenSize.getWidth()/2 - frame.getWidth()/2;
+		int centerHeight = (int)screenSize.getHeight()/2 - frame.getHeight()/2;
 		if (setUp) {
+			frame.setLocation(centerWidth,centerHeight);
 			frame.setVisible(true);
 			while (!start) {
-				Script.sleep(100);
+				Thread.sleep(100);
 			}
 			frame.dispose();
 		}
